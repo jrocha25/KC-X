@@ -1,8 +1,8 @@
-# KCNA — Kubernetes Fundamentals (44%) — 52 questions
-# Topics: core-concepts 18 · administration 11 · scheduling 11 · containerization 12
+# KCNA — Kubernetes Fundamentals (44%) — 78 questions
+# Topics: core-concepts 27 · administration 17 · scheduling 16 · containerization 18
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# ---------------------------------------------------------------- core-concepts (18)
+# ---------------------------------------------------------------- core-concepts (27)
 
 - id: kcna-kf-001
   domain: k8s-fundamentals
@@ -336,7 +336,191 @@
   references:
     - https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 
-# --------------------------------------------------------------- administration (11)
+- id: kcna-kf-053
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: >
+    A cluster has just been created and nobody has added a namespace yet. Which
+    namespaces does it already contain?
+  options:
+    A: "default, kube-system, kube-admin and kube-dns"
+    B: "default, kube-system, kube-apiserver and kube-public"
+    C: "default, kube-control-plane, kube-public and kube-ingress"
+    D: "default, kube-system, kube-public and kube-node-lease"
+  answer: D
+  explanation: >
+    Kubernetes starts with four namespaces. default is for objects created without a
+    namespace, kube-system holds objects created by the Kubernetes system, kube-public is
+    readable by all clients, and kube-node-lease holds the Lease objects that carry node
+    heartbeats. The other names are components or add-ons, not built-in namespaces.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+
+- id: kcna-kf-054
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: >
+    Two containers run in the same Pod. How can the first container reach a server
+    listening on port 8080 in the second one?
+  options:
+    A: "Through localhost:8080, because both share one network namespace"
+    B: "Only through a ClusterIP Service that selects the Pod's own labels"
+    C: "Through the node's IP address and a NodePort"
+    D: "Through each container's own separate Pod IP address"
+  answer: A
+  explanation: >
+    All containers in a Pod share the Pod's network namespace, including its IP address
+    and port space, so they can talk to each other over localhost. A Service or NodePort is
+    only needed for traffic coming from outside the Pod, and containers do not get
+    separate IP addresses.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/
+    - https://kubernetes.io/docs/concepts/services-networking/
+
+- id: kcna-kf-055
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    A Pod defines two init containers and one app container. How does the kubelet start
+    them?
+  options:
+    A: "All three containers start in parallel as soon as the Pod is scheduled"
+    B: "The app container starts first, then the init containers run beside it"
+    C: "The init containers run one at a time to completion, then the app starts"
+    D: "Both init containers run in parallel, and the app starts once either ends"
+  answer: C
+  explanation: >
+    Init containers always run to completion, and each one must succeed before the next
+    one starts. Only when all init containers have finished does the kubelet start the
+    app containers. If an init container fails, the kubelet restarts it until it succeeds
+    (unless the Pod's restartPolicy is Never).
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+
+- id: kcna-kf-056
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: hard
+  question: >
+    You want a log-shipping helper to start before the main application container and keep
+    running for the whole life of the Pod. How is a native sidecar container declared?
+  options:
+    A: "As an entry in spec.containers with the annotation sidecar: true"
+    B: "As an entry in spec.initContainers with restartPolicy: Always"
+    C: "As an entry in spec.ephemeralContainers added with kubectl debug"
+    D: "As a second Pod in the same Deployment with the same labels"
+  answer: B
+  explanation: >
+    A native sidecar is an init container whose restartPolicy is Always (stable since
+    v1.33). It starts in init order but does not need to finish, keeps running for the life
+    of the Pod, and is stopped only after the main containers have stopped. There is no
+    sidecar annotation, ephemeral containers are for debugging, and a separate Pod does not
+    share the app's network namespace or lifecycle.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/
+
+- id: kcna-kf-057
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    You run kubectl delete deployment web with no extra flags. What happens to the
+    ReplicaSets and Pods the Deployment created?
+  options:
+    A: "They keep running as orphans and must be deleted by hand"
+    B: "They keep running until the namespace itself is deleted"
+    C: "They are adopted by the kube-controller-manager and kept running"
+    D: "The garbage collector deletes them using their owner references"
+  answer: D
+  explanation: >
+    The ReplicaSets carry an owner reference to the Deployment, and the Pods to their
+    ReplicaSet. By default Kubernetes uses background cascading deletion: the owner is
+    removed at once and the garbage collector then deletes the dependents. Dependents are
+    only left behind as orphans if you ask for it, for example with --cascade=orphan.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/garbage-collection/
+
+- id: kcna-kf-058
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: In a Kubernetes object, what is the difference between the spec and status fields?
+  options:
+    A: "spec is the desired state you set; status is the current state the system reports"
+    B: "spec is written by controllers; status is the desired state that users write"
+    C: "spec holds labels and annotations; status holds the container images to run"
+    D: "spec is used only for Pods; status is used only for Deployments and Services"
+  answer: A
+  explanation: >
+    When you create an object you describe its desired state in spec. Kubernetes
+    components fill in status with the object's current state, and the control plane keeps
+    working to make the actual state match the spec.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/
+
+- id: kcna-kf-059
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: hard
+  question: >
+    You delete a PersistentVolume, but kubectl keeps showing it as Terminating, and its
+    metadata lists kubernetes.io/pv-protection. What is happening?
+  options:
+    A: "The API server is still copying all of the volume's data into etcd"
+    B: "A finalizer blocks removal until its controller finishes cleanup"
+    C: "The kubelet must restart before any volume can be deleted"
+    D: "The delete failed and must be retried with a newer kubectl"
+  answer: B
+  explanation: >
+    Deleting an object that has finalizers only sets its deletionTimestamp. The object stays
+    in a terminating state until every finalizer key has been removed by the controller
+    responsible for it. Here pv-protection is cleared once no Pod uses the volume, and then
+    the PersistentVolume is deleted.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/finalizers/
+
+- id: kcna-kf-060
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: Which of the following is NOT a valid value of a Pod's status.phase field?
+  options:
+    A: "Pending"
+    B: "Succeeded"
+    C: "CrashLoopBackOff"
+    D: "Unknown"
+  answer: C
+  explanation: >
+    The Pod phases are Pending, Running, Succeeded, Failed and Unknown. CrashLoopBackOff
+    only appears in the STATUS column of some kubectl commands when a container keeps
+    failing to start; it is a display value, not a phase.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
+
+- id: kcna-kf-061
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: >
+    You need to run a database migration once and make sure it finishes successfully,
+    retrying if its Pod fails. Which resource fits best?
+  options:
+    A: "A DaemonSet"
+    B: "A Deployment"
+    C: "A StatefulSet"
+    D: "A Job"
+  answer: D
+  explanation: >
+    A Job runs one-off tasks to completion. It creates Pods and keeps retrying them until
+    the required number finish successfully. Deployments, StatefulSets and DaemonSets
+    keep long-running Pods alive and restart them when they exit.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/job/
+
+# --------------------------------------------------------------- administration (17)
 
 - id: kcna-kf-019
   domain: k8s-fundamentals
@@ -544,7 +728,125 @@
   references:
     - https://kubernetes.io/releases/version-skew-policy/
 
-# ------------------------------------------------------------------- scheduling (11)
+- id: kcna-kf-062
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which command lists Pods with extra columns, such as the node each Pod is running on?
+  options:
+    A: "kubectl get pods --all"
+    B: "kubectl get pods -o wide"
+    C: "kubectl describe pods --short"
+    D: "kubectl top pods --nodes"
+  answer: B
+  explanation: >
+    The wide output format adds more information to kubectl get, including the node name
+    and the Pod IP. --all and --short do not do this, and kubectl top shows resource usage.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/
+
+- id: kcna-kf-063
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which command changes the Deployment web to run 5 replicas?
+  options:
+    A: "kubectl scale deployment/web --replicas=5"
+    B: "kubectl set replicas deployment/web 5"
+    C: "kubectl rollout scale deployment/web 5"
+    D: "kubectl autoscale deployment/web --count=5"
+  answer: A
+  explanation: >
+    kubectl scale sets the replica count of a Deployment, ReplicaSet or StatefulSet, and
+    --replicas is required. kubectl set has no replicas subcommand, rollout has no scale
+    subcommand, and kubectl autoscale creates a HorizontalPodAutoscaler instead.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_scale/
+
+- id: kcna-kf-064
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    On a kubeadm control plane node, kube-apiserver runs from a manifest in
+    /etc/kubernetes/manifests. You delete its Pod with kubectl, and it comes straight back.
+    Why?
+  options:
+    A: "It is owned by a Deployment in kube-system that recreates it"
+    B: "It is owned by a DaemonSet that targets control plane nodes"
+    C: "It is a static Pod run by the kubelet from the manifest file"
+    D: "The scheduler keeps a reserved copy of control plane Pods"
+  answer: C
+  explanation: >
+    Static Pods are managed directly by the kubelet from files in its staticPodPath. The
+    API server only shows a read-only mirror Pod, so deleting it with kubectl does not
+    stop the static Pod. To change or remove it, edit or remove the manifest file on the
+    node.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/
+
+- id: kcna-kf-065
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: Which command checks whether you are allowed to create Deployments in the namespace dev?
+  options:
+    A: "kubectl get rolebindings --verb=create --resource=deployments -n dev"
+    B: "kubectl describe user me --namespace dev"
+    C: "kubectl rbac check deployments -n dev"
+    D: "kubectl auth can-i create deployments --namespace dev"
+  answer: D
+  explanation: >
+    kubectl auth can-i asks the API server's authorization layer whether the current user
+    can perform an action, and answers yes or no. It works with any authorization mode,
+    and administrators can add --as to check another user. Kubernetes has no User
+    objects, and kubectl has no rbac check command.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/authorization/
+
+- id: kcna-kf-066
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    What is the standard way to back up the state of every Kubernetes object in a
+    cluster that uses etcd?
+  options:
+    A: "Run kubectl get all -A -o yaml from the default namespace"
+    B: "Take a snapshot with etcdctl snapshot save"
+    C: "Copy the kubeconfig file from each control plane node"
+    D: "Export the kube-apiserver logs to object storage"
+  answer: B
+  explanation: >
+    All Kubernetes objects are stored in etcd, and an etcd snapshot captures that whole
+    state. kubectl get all only lists some resource types, a kubeconfig holds client
+    credentials, and logs do not contain the object state.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
+
+- id: kcna-kf-067
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: hard
+  question: >
+    You are upgrading a kubeadm cluster from one minor version to the next. In which
+    order should you upgrade the nodes?
+  options:
+    A: "Control plane nodes first, one at a time, then the worker nodes"
+    B: "Worker nodes first, so the control plane is never ahead of kubelets"
+    C: "All nodes at once, because kubeadm doesn't allow mixed versions"
+    D: "Any order, provided that you skip at most two minor versions"
+  answer: A
+  explanation: >
+    The kubeadm upgrade workflow upgrades the primary control plane node, then any other
+    control plane nodes one at a time, and then the worker nodes. The kubelet may be older
+    than the API server but never newer, so workers go last. Skipping minor versions is
+    not supported.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
+    - https://kubernetes.io/releases/version-skew-policy/
+
+# ------------------------------------------------------------------- scheduling (16)
 
 - id: kcna-kf-030
   domain: k8s-fundamentals
@@ -762,7 +1064,104 @@
     - https://kubernetes.io/docs/reference/labels-annotations-taints/
     - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
 
-# -------------------------------------------------------------- containerization (12)
+- id: kcna-kf-068
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: easy
+  question: >
+    Which taint effect tells the scheduler to try to avoid a node for Pods that do not
+    tolerate the taint, without guaranteeing it?
+  options:
+    A: "NoSchedule"
+    B: "NoExecute"
+    C: "PreferNoSchedule"
+    D: "AvoidSchedule"
+  answer: C
+  explanation: >
+    PreferNoSchedule is the soft version of NoSchedule: the control plane tries not to place
+    non-tolerating Pods on the node but may still do so. NoSchedule is a hard rule for new
+    Pods, NoExecute also evicts running Pods, and AvoidSchedule does not exist.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+
+- id: kcna-kf-069
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: easy
+  question: In which two steps does kube-scheduler choose a node for a Pod?
+  options:
+    A: "Admission, then validation"
+    B: "Binding, then preemption"
+    C: "Draining, then cordoning"
+    D: "Filtering, then scoring"
+  answer: D
+  explanation: >
+    Filtering finds the nodes where the Pod could run, for example those with enough free
+    resources for its requests. Scoring then ranks the remaining nodes, and the Pod is
+    bound to the highest-scoring one. If filtering leaves no nodes, the Pod stays
+    unscheduled.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/
+
+- id: kcna-kf-070
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: Which Pod gets the Guaranteed quality of service (QoS) class?
+  options:
+    A: "One whose containers set no CPU or memory requests or limits"
+    B: "One where each container sets CPU and memory limits equal to its requests"
+    C: "One where at least one container sets a memory request"
+    D: "One where all containers set limits that are larger than their requests"
+  answer: B
+  explanation: >
+    A Pod is Guaranteed when every container has CPU and memory requests and limits, and
+    the limits equal the requests. With no requests or limits it is BestEffort, and any
+    other combination, such as some requests or limits above requests, makes it
+    Burstable.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/
+
+- id: kcna-kf-071
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    A node runs out of memory and the kubelet must evict Pods. Which QoS class is
+    evicted first?
+  options:
+    A: "BestEffort"
+    B: "Burstable"
+    C: "Guaranteed"
+    D: "The Pod with the newest creation time, whatever its class"
+  answer: A
+  explanation: >
+    Under node pressure Kubernetes evicts BestEffort Pods first, then Burstable Pods, and
+    Guaranteed Pods last. This is one reason to give important workloads requests and
+    limits.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/
+
+- id: kcna-kf-072
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: A Pod spec sets nodeName to worker-2. How does this affect scheduling?
+  options:
+    A: "The scheduler treats worker-2 as a preference and may pick another node"
+    B: "The scheduler checks taints first, then binds the Pod to worker-2"
+    C: "The scheduler ignores the Pod, and the kubelet on worker-2 tries to run it"
+    D: "The scheduler rejects the Pod, because nodeName is reserved for static Pods"
+  answer: C
+  explanation: >
+    When nodeName is set, the scheduler skips the Pod and the named node's kubelet tries
+    to run it, overriding nodeSelector and affinity rules. If the node lacks resources, the
+    Pod fails (for example with OutOfcpu) instead of moving elsewhere. Node affinity or
+    nodeSelector are preferred because they do not bypass the scheduler.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+
+# -------------------------------------------------------------- containerization (18)
 
 - id: kcna-kf-041
   domain: k8s-fundamentals
@@ -990,3 +1389,121 @@
     and faster to start than VMs, each of which boots its own guest kernel on a hypervisor.
   references:
     - https://kubernetes.io/docs/concepts/overview/
+
+- id: kcna-kf-073
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Where is a container image usually stored so that nodes can pull it when a Pod starts?
+  options:
+    A: "In etcd, next to the Pod object that uses it"
+    B: "In a ConfigMap in the kube-system namespace"
+    C: "In the kubelet's configuration file on every node"
+    D: "In a container registry, such as a private registry"
+  answer: D
+  explanation: >
+    You build an image and push it to a registry before referencing it in a Pod. The image
+    name can include the registry host, and if it does not, Kubernetes assumes the Docker
+    public registry. etcd and ConfigMaps store API objects, not image contents.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/images/
+
+- id: kcna-kf-074
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: >
+    Your Pod uses an image from a private registry that requires a login. How does the
+    Pod give the kubelet the registry credentials?
+  options:
+    A: "By listing a docker-registry type Secret under imagePullSecrets"
+    B: "By setting the registry password in a container environment variable"
+    C: "By adding the credentials to the image tag after an @ sign"
+    D: "By mounting a ConfigMap at /root/.docker in the container"
+  answer: A
+  explanation: >
+    Registry credentials are stored in a Secret of type kubernetes.io/dockerconfigjson
+    (created with kubectl create secret docker-registry), and the Pod refers to it in
+    spec.imagePullSecrets. Environment variables are only visible inside the container,
+    which starts after the image has been pulled.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+
+- id: kcna-kf-075
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: >
+    A container writes files to its own filesystem, outside any volume, and then
+    crashes. What happens to those files when the kubelet restarts it?
+  options:
+    A: "They are copied into the restarted container automatically"
+    B: "They are lost, because the restarted container starts clean"
+    C: "They are saved in etcd until the Pod is deleted"
+    D: "They are moved to the node's /tmp directory"
+  answer: B
+  explanation: >
+    On-disk files in a container are ephemeral. When a container crashes or stops, its
+    files are lost and the kubelet restarts it with a clean state. To keep data across
+    container restarts, write it to a volume.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/volumes/
+
+- id: kcna-kf-076
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: What does the OCI Runtime Specification define?
+  options:
+    A: "The configuration, execution environment and lifecycle of a container"
+    B: "The format of image manifests, image indexes and filesystem layer archives"
+    C: "The API that kubectl uses to talk to the kube-apiserver"
+    D: "The plugin interface that sets up Pod network interfaces"
+  answer: A
+  explanation: >
+    The Open Container Initiative's runtime spec covers how a container is configured,
+    the environment it runs in and its lifecycle. Low-level runtimes such as runc
+    implement it. Image formats are covered by the separate OCI Image Spec, and Pod
+    networking by CNI.
+  references:
+    - https://github.com/opencontainers/runtime-spec/blob/main/spec.md
+
+- id: kcna-kf-077
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    An image defines ENTRYPOINT ["/app/server"] and CMD ["--port=80"]. The Pod's
+    container sets args to ["--port=9090"] but sets no command. What runs?
+  options:
+    A: "Only --port=9090, because args replaces the whole startup line"
+    B: "/app/server --port=80, because args is ignored without a command"
+    C: "/app/server --port=80 --port=9090, because args is appended to CMD"
+    D: "/app/server --port=9090, because args replaces only CMD"
+  answer: D
+  explanation: >
+    The Pod's command field corresponds to the image ENTRYPOINT and args to CMD. If you set
+    args but no command, the image's default command runs with your new arguments. Setting
+    command would replace the ENTRYPOINT as well.
+  references:
+    - https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+
+- id: kcna-kf-078
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    You are logged in to a node that runs containerd and want to list the containers on
+    it directly through the CRI. Which tool is designed for this?
+  options:
+    A: "kubeadm"
+    B: "crictl"
+    C: "kubectl"
+    D: "etcdctl"
+  answer: B
+  explanation: >
+    crictl is a command-line interface for CRI-compatible runtimes, used to inspect and
+    debug runtimes and containers on a node (crictl ps, crictl images, crictl logs). kubectl
+    talks to the API server, kubeadm bootstraps clusters, and etcdctl manages etcd.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/

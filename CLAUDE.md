@@ -8,7 +8,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Do not guess at ambiguous requirements — ask instead of assuming.
 - Only proceed without asking if the task is trivial or fully unambiguous.
 - Always update readme.md, claude.md or other documentation at the end of tasks, if needed.
-- at the end of a plan, always commit and push
+- at the end of a plan, always commit and push.
+- when creating new questions, always make sure that they follow the same structure and style of the KCNA/KCSA.
 
 ## Commands (Docker only — Flask is not installed on the host)
 
@@ -23,7 +24,7 @@ The image copies code, questions and tests at build time (no bind mount), so pas
 
 - YAML in `questions/<cert>/<domain>.yaml` is the single source of truth (never stored in SQLite). The app refuses to start if any question is invalid. The full spec is in `docs/QUESTION_FORMAT.md`; use `/add-question` when writing questions.
 - Ids are `<cert>-<abbr>-NNN` (abbr from `certs/<cert>.yaml`). Never renumber or reuse an id, because attempt history references ids. Retire a question by deleting it.
-- `tests/test_bank.py` pins each bank's size (`len == 120`) and the exact per-topic counts (`KCNA_TOPIC_TARGETS` / `KCSA_TOPIC_TARGETS`). Growing a bank is allowed, but update both together with the topic counts in the YAML file's header comment.
+- `tests/test_bank.py` pins the exact per-topic counts (`KCNA_TOPIC_TARGETS` / `KCSA_TOPIC_TARGETS`); the bank size (KCNA 180 = 3x the exam, KCSA 120 = 2x) is derived from them. Growing a bank is allowed, but update the targets together with the topic counts in the YAML header and `docs/EXAM_BLUEPRINTS.md`.
 - Tests also fail if any answer letter holds more than 40% of answers, or if the correct option is strictly the longest in more than 35% of questions.
 - Never write content recalled from the real exam or from dumps (LF NDA). Every question cites official https docs. Use current Kubernetes only: PSA (not PSP), containerd/CRI-O, EndpointSlices, Gateway API.
 - A new cert needs only `certs/<id>.yaml` plus a `questions/<id>/` folder, with no code changes. Domain weights must sum to 100. On curriculum changes, also update `docs/EXAM_BLUEPRINTS.md` and `last_verified`.

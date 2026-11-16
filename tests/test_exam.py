@@ -43,16 +43,14 @@ def test_exam_covers_every_topic(conn, app_bank):
         db.delete_history(conn)
 
 
-def test_consecutive_exams_do_not_repeat_and_third_reuses_oldest(conn, app_bank):
+def test_consecutive_exams_do_not_repeat_and_fourth_reuses_oldest(conn, app_bank):
     cert = app_bank.certs["kcna"]
     rng = random.Random(7)
-    a1 = exam.build_exam(conn, app_bank, cert, rng=rng, now=T0)
-    a2 = exam.build_exam(conn, app_bank, cert, rng=rng, now=T0 + timedelta(hours=1))
-    a3 = exam.build_exam(conn, app_bank, cert, rng=rng, now=T0 + timedelta(hours=2))
-    q1, q2, q3 = set(_qids(conn, a1)), set(_qids(conn, a2)), set(_qids(conn, a3))
-    assert not q1 & q2                      # bank is 2x the exam: two exams, no repeats
-    assert q1 | q2 == {q.id for q in app_bank.questions["kcna"]}
-    assert q3 == q1                         # least recently served come back first
+    attempts = [exam.build_exam(conn, app_bank, cert, rng=rng, now=T0 + timedelta(hours=h)) for h in range(4)]
+    q1, q2, q3, q4 = (set(_qids(conn, a)) for a in attempts)
+    assert not (q1 & q2 or q1 & q3 or q2 & q3)  # KCNA bank is 3x the exam: three exams, no repeats
+    assert q1 | q2 | q3 == {q.id for q in app_bank.questions["kcna"]}
+    assert q4 == q1                             # least recently served come back first
 
 
 def test_exam_order_is_shuffled(conn, app_bank):
@@ -168,9 +166,11 @@ def test_drill_all_and_capped(conn, app_bank):
     aid = exam.build_drill(conn, app_bank, cert, "container-orchestration", None)
     assert sorted(_qids(conn, aid)) == sorted(q.id for q in pool)
 
-    small = sum(1 for q in app_bank.questions["kcna"] if q.domain == "cn-architecture")
+    # Capping: every KCNA domain now has 20+ questions, so use KCSA's smallest domain.
+    kcsa = app_bank.certs["kcsa"]
+    small = sum(1 for q in app_bank.questions["kcsa"] if q.domain == "compliance-frameworks")
     assert small < 20
-    aid = exam.build_drill(conn, app_bank, cert, "cn-architecture", 20)
+    aid = exam.build_drill(conn, app_bank, kcsa, "compliance-frameworks", 20)
     assert len(_qids(conn, aid)) == small
 
 

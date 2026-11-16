@@ -1,8 +1,8 @@
-# KCNA — Container Orchestration (28%) — 34 questions
-# Topics: networking 10 · security 9 · troubleshooting 7 · storage 8
+# KCNA — Container Orchestration (28%) — 51 questions
+# Topics: networking 15 · security 14 · troubleshooting 10 · storage 12
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# ------------------------------------------------------------------- networking (10)
+# ------------------------------------------------------------------- networking (15)
 
 - id: kcna-co-001
   domain: container-orchestration
@@ -194,7 +194,109 @@
   references:
     - https://kubernetes.io/docs/concepts/services-networking/service/
 
-# --------------------------------------------------------------------- security (9)
+- id: kcna-co-035
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: >
+    Which DNS server is the default implementation of cluster DNS in current Kubernetes,
+    and is itself a CNCF project?
+  options:
+    A: "BIND"
+    B: "dnsmasq"
+    C: "Unbound"
+    D: "CoreDNS"
+  answer: D
+  explanation: >
+    CoreDNS is a flexible, extensible DNS server and the default implementation of
+    Kubernetes cluster DNS. kubeadm installs it, and like Kubernetes it is hosted by the
+    CNCF. The other three are general-purpose DNS servers.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/coredns/
+
+- id: kcna-co-036
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: >
+    For a Service that has a selector, what do the EndpointSlices created by the control
+    plane contain?
+  options:
+    A: "The firewall rules kube-proxy applies to the Service"
+    B: "The network endpoints, typically Pod IPs, that back the Service"
+    C: "The DNS records that CoreDNS serves for the Service's name"
+    D: "The TLS certificates that the Service presents to each of its clients"
+  answer: B
+  explanation: >
+    EndpointSlices track the IP addresses of a Service's backend endpoints. The control
+    plane creates them automatically for every Service with a selector, listing the
+    matching Pods, by default with up to 100 endpoints per slice. kube-proxy and DNS read
+    them, but they hold no firewall rules or certificates.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/endpoint-slices/
+
+- id: kcna-co-037
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: >
+    A Service of type ExternalName in the namespace prod sets externalName to
+    db.example.com. What does a Pod get when it looks up the Service's name?
+  options:
+    A: "A CNAME record that points to db.example.com"
+    B: "A cluster IP that kube-proxy forwards to db.example.com"
+    C: "The IP addresses of Pods labeled name=db.example.com"
+    D: "An NXDOMAIN error, as the Service has no selector"
+  answer: A
+  explanation: >
+    An ExternalName Service maps a Service name to an external DNS name. Cluster DNS answers
+    with a CNAME record, so redirection happens at the DNS level and there is no cluster IP,
+    proxying or selector involved.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+
+- id: kcna-co-038
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: >
+    A Service port entry sets port to 80 and does not set targetPort. Which port on the
+    Pods receives the traffic?
+  options:
+    A: "Port 8080, the conventional default for application containers"
+    B: "A random port that kube-proxy assigns from the NodePort range"
+    C: "Port 80, because targetPort defaults to the value of port"
+    D: "The first containerPort that is declared in the Pod spec"
+  answer: C
+  explanation: >
+    A Service can map any incoming port to a targetPort, and for convenience targetPort
+    defaults to the same value as port. targetPort can also refer to a named container
+    port. NodePort allocation only applies to NodePort and LoadBalancer Services.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+
+- id: kcna-co-039
+  domain: container-orchestration
+  topic: networking
+  difficulty: hard
+  question: >
+    The backend Pods behind a LoadBalancer Service need to see the real client IP address.
+    Which setting achieves this, and what is the trade-off?
+  options:
+    A: "externalTrafficPolicy: Cluster, at the cost of extra latency from DNS lookups"
+    B: "externalTrafficPolicy: Local, at the cost of possibly uneven load across Pods"
+    C: "sessionAffinity: ClientIP, at the cost of losing all readiness probe checks"
+    D: "type: ExternalName, at the cost of losing load balancing between replicas"
+  answer: B
+  explanation: >
+    With externalTrafficPolicy Local, nodes only send external traffic to their own
+    endpoints, which preserves the client source IP and avoids a second hop. Because the
+    load balancer does not know how many Pods each node has, traffic may be spread
+    unevenly. The default, Cluster, hides the client IP but spreads load well.
+  references:
+    - https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/
+
+# --------------------------------------------------------------------- security (14)
 
 - id: kcna-co-011
   domain: container-orchestration
@@ -366,7 +468,107 @@
   references:
     - https://kubernetes.io/docs/concepts/security/controlling-access/
 
-# -------------------------------------------------------------- troubleshooting (7)
+- id: kcna-co-040
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    Which namespace label makes Pod Security Admission reject Pods that violate the
+    restricted profile, instead of only warning about them?
+  options:
+    A: "pod-security.kubernetes.io/warn: restricted"
+    B: "pod-security.kubernetes.io/audit: restricted"
+    C: "pod-security.kubernetes.io/level: restricted"
+    D: "pod-security.kubernetes.io/enforce: restricted"
+  answer: D
+  explanation: >
+    Pod Security Admission is configured with namespace labels of the form
+    pod-security.kubernetes.io/<MODE>: <LEVEL>. In enforce mode violating Pods are rejected,
+    in audit mode they are recorded in the audit log, and in warn mode the user gets a
+    warning. There is no level mode.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-admission/
+
+- id: kcna-co-041
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    A user is bound to a ClusterRole that allows reading Secrets everywhere. How can you add
+    an RBAC rule that denies them access to Secrets in the namespace payments?
+  options:
+    A: "Create a Role in payments that sets verbs to deny"
+    B: "Create a RoleBinding in payments with a higher priority"
+    C: "You can't: RBAC rules are purely additive, with no deny rules"
+    D: "Add the user to an exclusions list on the existing ClusterRoleBinding"
+  answer: C
+  explanation: >
+    RBAC permissions are purely additive; there are no deny rules, priorities or
+    exclusions. To restrict the user you must remove or narrow the binding that grants the
+    access, for example by replacing the ClusterRoleBinding with RoleBindings in the
+    namespaces they need.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+
+- id: kcna-co-042
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    An application never calls the Kubernetes API, so you don't want a ServiceAccount
+    token mounted into its Pods. What should you set?
+  options:
+    A: "automountServiceAccountToken: false on the Pod or its ServiceAccount"
+    B: "serviceAccountName: none in the Pod spec"
+    C: "readOnlyRootFilesystem: true in every container's securityContext"
+    D: "The label kubernetes.io/no-token on the namespace"
+  answer: A
+  explanation: >
+    Setting automountServiceAccountToken to false on the ServiceAccount or on the Pod stops
+    the API credentials from being mounted; if both set a value, the Pod spec wins. A
+    read-only root filesystem does not affect the token mount, and the other options do
+    not exist.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+
+- id: kcna-co-043
+  domain: container-orchestration
+  topic: security
+  difficulty: hard
+  question: How are normal (human) user accounts managed in Kubernetes?
+  options:
+    A: "They are User objects created with kubectl create user"
+    B: "They are ServiceAccounts in the kube-system namespace"
+    C: "They are stored in etcd, each with its own hashed password"
+    D: "There are no User objects; users authenticate by other means"
+  answer: D
+  explanation: >
+    Kubernetes has no objects that represent normal users, and users cannot be added
+    through an API call. Instead, a request is authenticated by methods such as a client
+    certificate signed by the cluster CA or an OpenID Connect token, and RBAC then decides
+    what that username may do. ServiceAccounts are for workloads.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/authentication/
+
+- id: kcna-co-044
+  domain: container-orchestration
+  topic: security
+  difficulty: easy
+  question: Which command creates a Secret named db-user-pass from literal key/value pairs?
+  options:
+    A: "kubectl apply secret db-user-pass --data=username=admin"
+    B: "kubectl create secret generic db-user-pass --from-literal=username=admin"
+    C: "kubectl create configmap db-user-pass --secret --from-literal=username=admin"
+    D: "kubectl set secret db-user-pass --literal=username=admin"
+  answer: B
+  explanation: >
+    kubectl create secret generic builds an Opaque Secret, and each --from-literal adds one
+    key. kubectl apply works with manifests rather than subcommands, ConfigMaps have no
+    --secret flag, and kubectl set has no secret subcommand.
+  references:
+    - https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/
+
+# -------------------------------------------------------------- troubleshooting (10)
 
 - id: kcna-co-020
   domain: container-orchestration
@@ -505,7 +707,67 @@
   references:
     - https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
 
-# ----------------------------------------------------------------------- storage (8)
+- id: kcna-co-045
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: easy
+  question: >
+    kubectl top pods fails with an error saying that the Metrics API is not available.
+    What is most likely missing from the cluster?
+  options:
+    A: "metrics-server"
+    B: "Prometheus"
+    C: "CoreDNS"
+    D: "kube-proxy"
+  answer: A
+  explanation: >
+    kubectl top reads CPU and memory usage from the Metrics API, which is served by
+    metrics-server (or another adapter for that API). Prometheus is a separate monitoring
+    system, and CoreDNS and kube-proxy do not serve the Metrics API.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-cluster/resource-metrics-pipeline/
+
+- id: kcna-co-046
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    Inside every Pod, nslookup of any Service name times out, even for
+    kubernetes.default. What should you check first?
+  options:
+    A: "The kubelet logs on every node, for failed volume mounts"
+    B: "The Ingress controller's logs in the ingress-nginx namespace"
+    C: "That CoreDNS Pods (label k8s-app=kube-dns) run in kube-system"
+    D: "The container image registry, for ImagePullBackOff errors"
+  answer: C
+  explanation: >
+    When no Service name resolves anywhere, cluster DNS itself is the suspect. Check that
+    the CoreDNS Pods are running with kubectl get pods -n kube-system -l k8s-app=kube-dns
+    and read their logs. The label keeps the value kube-dns for backward compatibility.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
+
+- id: kcna-co-047
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: hard
+  question: >
+    A container reads an environment variable from a ConfigMap key and marks the
+    reference as optional: true. The ConfigMap doesn't exist yet. What happens to the Pod?
+  options:
+    A: "It stays Pending until someone creates the ConfigMap"
+    B: "It starts, and the variable's value is left empty"
+    C: "It is rejected by the API server at creation time"
+    D: "It starts, and the variable gets the key's name"
+  answer: B
+  explanation: >
+    A ConfigMap reference marked optional does not block the Pod. If the ConfigMap or key
+    is missing, the data it would provide, here the environment variable, is empty. Without
+    optional, a missing ConfigMap prevents the container from starting.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/
+
+# ----------------------------------------------------------------------- storage (12)
 
 - id: kcna-co-027
   domain: container-orchestration
@@ -658,3 +920,81 @@
   references:
     - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
     - https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/
+
+- id: kcna-co-048
+  domain: container-orchestration
+  topic: storage
+  difficulty: easy
+  question: >
+    A Secret with the keys username and password is mounted as a volume at /etc/creds.
+    What does the container see?
+  options:
+    A: "A single YAML file /etc/creds/secret.yaml with both keys"
+    B: "Two environment variables named USERNAME and PASSWORD"
+    C: "An empty directory until the container calls the API server"
+    D: "Two files, /etc/creds/username and /etc/creds/password"
+  answer: D
+  explanation: >
+    When a Secret is mounted as a volume, each key becomes a file under the mount path
+    holding that key's value. The kubelet keeps this data in tmpfs, so it is not written
+    to the node's disk. Environment variables are a separate way of consuming Secrets.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/secret/
+
+- id: kcna-co-049
+  domain: container-orchestration
+  topic: storage
+  difficulty: easy
+  question: Which kind of volume driver is required to use the VolumeSnapshot API?
+  options:
+    A: "A CSI driver that implements snapshots"
+    B: "Any in-tree volume plugin"
+    C: "The built-in hostPath driver on every node"
+    D: "An emptyDir medium set to Memory"
+  answer: A
+  explanation: >
+    A VolumeSnapshot is a user's request for a snapshot of a volume, much like a PVC is a
+    request for storage, and its attributes come from a VolumeSnapshotClass. Snapshot
+    support is only available for CSI drivers, and only those that implement it.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/volume-snapshots/
+
+- id: kcna-co-050
+  domain: container-orchestration
+  topic: storage
+  difficulty: medium
+  question: >
+    Which access mode makes sure that only one Pod in the whole cluster can read or
+    write a volume?
+  options:
+    A: "ReadWriteOnce"
+    B: "ReadOnlyMany"
+    C: "ReadWriteOncePod"
+    D: "ReadWriteMany"
+  answer: C
+  explanation: >
+    ReadWriteOncePod (stable since v1.29, CSI volumes only) limits a volume to a single
+    Pod. ReadWriteOnce limits it to a single node, so several Pods on that node can still
+    use it. ReadOnlyMany and ReadWriteMany allow access from many nodes.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+
+- id: kcna-co-051
+  domain: container-orchestration
+  topic: storage
+  difficulty: medium
+  question: >
+    A cluster has no dynamic provisioning and only 50Gi PersistentVolumes. A PVC requests
+    100Gi. What happens to the PVC?
+  options:
+    A: "It binds to two 50Gi volumes and joins them together"
+    B: "It stays unbound until a matching 100Gi volume exists"
+    C: "It binds to one 50Gi volume and grows it on first use"
+    D: "It is rejected by the API server when it is created"
+  answer: B
+  explanation: >
+    Claims remain unbound indefinitely if no matching volume exists, and are bound when a
+    matching one becomes available. A PVC binds to exactly one PersistentVolume, and the
+    API server accepts the claim even when nothing can satisfy it yet.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/

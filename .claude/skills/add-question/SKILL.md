@@ -19,7 +19,7 @@ Request: $ARGUMENTS
 4. **If counts changed:**
    - Update the topic counts in the YAML header comment.
    - Update the topic's entry in `KCNA_TOPIC_TARGETS` / `KCSA_TOPIC_TARGETS` in `tests/test_bank.py`.
-   - Update the `len(questions) == 120` assertion if the bank's total changed.
+   - The bank size is derived from those targets; if the total changed, also update `docs/EXAM_BLUEPRINTS.md` and the README's bank count.
 5. **Self-check cold:** reread only the question and options, and confirm that exactly one option is defensibly correct.
 6. **Validate:**
    - `docker compose run --rm --build kcx python scripts/validate_questions.py questions/<cert>`, which must print OK.

@@ -99,6 +99,7 @@ Design details live in [ARCHITECTURE.md](ARCHITECTURE.md). Question rules are in
 - [x] GitHub Actions: run the validator, `pytest` and `docker build` on each PR (`.github/workflows/ci.yml`)
 - [x] Route tests with the Flask test client, covering the whole exam flow (`tests/test_routes.py`)
 - [x] A CI job that checks reference URLs, allowed to fail without blocking (`scripts/check_links.py`)
+- [x] Grow the KCNA bank to 180 questions, three times the per-exam split: 78/51/30/21
 - [ ] README screenshots
 - [ ] Tag `v1.0.0`
 

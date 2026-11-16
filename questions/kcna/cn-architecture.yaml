@@ -1,8 +1,8 @@
-# KCNA — Cloud Native Architecture (12%) — 14 questions
-# Topics: observability 6 · ecosystem-principles 5 · community-collaboration 3
+# KCNA — Cloud Native Architecture (12%) — 21 questions
+# Topics: observability 9 · ecosystem-principles 8 · community-collaboration 4
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# ---------------------------------------------------------------- observability (6)
+# ---------------------------------------------------------------- observability (9)
 
 - id: kcna-ca-001
   domain: cn-architecture
@@ -125,7 +125,70 @@
   references:
     - https://sre.google/sre-book/service-level-objectives/
 
-# --------------------------------------------------------- ecosystem-principles (5)
+- id: kcna-ca-015
+  domain: cn-architecture
+  topic: observability
+  difficulty: easy
+  question: >
+    What is the name of the functional query language used to select and aggregate time
+    series data in Prometheus?
+  options:
+    A: "SQL"
+    B: "PromQL"
+    C: "LogQL"
+    D: "GraphQL"
+  answer: B
+  explanation: >
+    Prometheus provides PromQL (Prometheus Query Language) for selecting and aggregating
+    time series in real time. The result can be shown as a graph or table, or read by other
+    programs through the HTTP API. LogQL is Loki's query language, and GraphQL is a general
+    API query language.
+  references:
+    - https://prometheus.io/docs/prometheus/latest/querying/basics/
+
+- id: kcna-ca-016
+  domain: cn-architecture
+  topic: observability
+  difficulty: medium
+  question: >
+    You want to find the 95th percentile of request latency, aggregated across many
+    instances of a service. Which Prometheus metric type fits best?
+  options:
+    A: "Gauge"
+    B: "Counter"
+    C: "Histogram"
+    D: "Info"
+  answer: C
+  explanation: >
+    A histogram counts observations, such as request durations, in configurable buckets.
+    histogram_quantile() can compute quantiles from it, even after aggregating histograms
+    from many instances. A gauge is a single value that can go up and down, and a counter
+    only goes up.
+  references:
+    - https://prometheus.io/docs/concepts/metric_types/
+
+- id: kcna-ca-017
+  domain: cn-architecture
+  topic: observability
+  difficulty: medium
+  question: >
+    Kubernetes doesn't provide a native solution for cluster-level logging. What is a
+    common way to ship every container's logs to a central backend?
+  options:
+    A: "Configure kube-apiserver to forward all the logs that it receives"
+    B: "Store the logs of each Pod in etcd next to its spec"
+    C: "Make each Pod mount a ConfigMap that collects its output"
+    D: "Run a node-level logging agent on every node as a DaemonSet"
+  answer: D
+  explanation: >
+    The usual approach is a node-level logging agent, such as Fluent Bit, deployed as a
+    DaemonSet. It reads the container log files on each node and forwards them to a
+    backend. The API server does not receive container logs, and etcd and ConfigMaps are
+    not log stores.
+  references:
+    - https://kubernetes.io/docs/concepts/cluster-administration/logging/
+
+# --------------------------------------------------------- ecosystem-principles (8)
 
 - id: kcna-ca-007
   domain: cn-architecture
@@ -222,7 +285,69 @@
   references:
     - https://glossary.cncf.io/service-mesh/
 
-# ---------------------------------------------------- community-collaboration (3)
+- id: kcna-ca-018
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: easy
+  question: >
+    An application handles more load by running additional replicas on more machines.
+    What is this called?
+  options:
+    A: "Horizontal scaling"
+    B: "Vertical scaling"
+    C: "Bin packing"
+    D: "Overcommitting"
+  answer: A
+  explanation: >
+    Horizontal scaling (scaling out) adds more instances or nodes so work can run
+    concurrently. Vertical scaling gives a single instance more CPU or memory instead.
+    Bin packing is about placing workloads efficiently, and overcommitting means promising
+    more resources than a node has.
+  references:
+    - https://glossary.cncf.io/horizontal-scaling/
+
+- id: kcna-ca-019
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: medium
+  question: What is a Kubernetes operator?
+  options:
+    A: "A cluster administrator role with full RBAC access"
+    B: "A controller that manages an application through custom resources"
+    C: "A kubectl plugin that runs the same command against many clusters"
+    D: "A managed Kubernetes service run by a cloud provider"
+  answer: B
+  explanation: >
+    The operator pattern encodes a human operator's knowledge of running an application
+    in software. An operator is a client of the Kubernetes API that acts as a controller for
+    one or more custom resources, reconciling them in a control loop. It is not a person,
+    a role or a hosting service.
+  references:
+    - https://kubernetes.io/docs/concepts/extend-kubernetes/operator/
+
+- id: kcna-ca-020
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: hard
+  question: >
+    During a traffic spike the HorizontalPodAutoscaler raises a Deployment's replicas, but
+    the new Pods stay Pending with "Insufficient cpu" on every node. Which component
+    addresses this?
+  options:
+    A: "A second HorizontalPodAutoscaler with a lower CPU target"
+    B: "The Vertical Pod Autoscaler, to raise each Pod's CPU request"
+    C: "A node autoscaler such as Cluster Autoscaler or Karpenter"
+    D: "The kube-scheduler, once its scoring weights have been tuned"
+  answer: C
+  explanation: >
+    The HPA adds Pods but not capacity. Node autoscalers such as Cluster Autoscaler and
+    Karpenter provision new nodes for unschedulable Pods (and consolidate nodes when
+    demand falls). Raising requests with the VPA would make the Pods even harder to place,
+    and scheduler tuning cannot create CPU that does not exist.
+  references:
+    - https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/
+
+# ---------------------------------------------------- community-collaboration (4)
 
 - id: kcna-ca-012
   domain: cn-architecture
@@ -276,3 +401,23 @@
     release in the kubernetes/enhancements repository.
   references:
     - https://github.com/kubernetes/enhancements
+
+- id: kcna-ca-021
+  domain: cn-architecture
+  topic: community-collaboration
+  difficulty: medium
+  question: >
+    Which CNCF body is the technical governing body that admits projects into the CNCF
+    and oversees them?
+  options:
+    A: "The Kubernetes Steering Committee"
+    B: "The CNCF End User Technical Advisory Board"
+    C: "The Linux Foundation Board of Directors"
+    D: "The Technical Oversight Committee (TOC)"
+  answer: D
+  explanation: >
+    The CNCF TOC is the foundation's technical governing body. It admits and oversees all
+    CNCF projects and maintains the foundation's technical vision. The Kubernetes Steering
+    Committee governs only the Kubernetes project.
+  references:
+    - https://github.com/cncf/toc

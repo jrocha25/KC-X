@@ -1,8 +1,8 @@
-# KCNA — Cloud Native Application Delivery (16%) — 20 questions
-# Topics: application-delivery 13 · debugging 7
+# KCNA — Cloud Native Application Delivery (16%) — 30 questions
+# Topics: application-delivery 20 · debugging 10
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# --------------------------------------------------------- application-delivery (13)
+# --------------------------------------------------------- application-delivery (20)
 
 - id: kcna-ad-001
   domain: app-delivery
@@ -247,7 +247,150 @@
     - https://opengitops.dev/
     - https://fluxcd.io/flux/concepts/
 
-# -------------------------------------------------------------------- debugging (7)
+- id: kcna-ad-021
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: In Helm, what is a release?
+  options:
+    A: "A packaged collection of templates published to a repository"
+    B: "A file of default configuration values shipped in a chart"
+    C: "An instance of a chart running in a Kubernetes cluster"
+    D: "A server-side Helm component that installs charts for you"
+  answer: C
+  explanation: >
+    A chart is a Helm package, its values.yaml supplies configuration, and a release is one
+    installed instance of a chart in a cluster. Installing the same chart twice creates two
+    releases. Helm 3 has no server-side component.
+  references:
+    - https://helm.sh/docs/intro/introduction/
+
+- id: kcna-ad-022
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: >
+    You want to install a Helm chart with the settings from your own file,
+    prod-values.yaml. Which flag passes that file?
+  options:
+    A: "--config prod-values.yaml"
+    B: "--set-file prod-values.yaml"
+    C: "--template prod-values.yaml"
+    D: "-f prod-values.yaml"
+  answer: D
+  explanation: >
+    -f (or --values) passes a YAML file of overrides, and when several are given the
+    rightmost file wins. --set overrides single values on the command line and takes
+    precedence over --values. --config and --template are not install options for values,
+    and --set-file sets one value from a file's contents.
+  references:
+    - https://helm.sh/docs/intro/using_helm/
+
+- id: kcna-ad-023
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: Which command watches a Deployment's rollout and reports when it has finished?
+  options:
+    A: "kubectl rollout status deployment/web"
+    B: "kubectl get deployment/web --rollout"
+    C: "kubectl describe rollout deployment/web"
+    D: "kubectl wait deployment/web --rollout"
+  answer: A
+  explanation: >
+    kubectl rollout status follows a Deployment rollout until it completes, or reports that
+    it is stuck. The other flags and the rollout resource used in the distractors do not
+    exist.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-ad-024
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    According to the CNCF glossary, how does continuous deployment differ from
+    continuous delivery?
+  options:
+    A: "Continuous deployment only builds artifacts and never runs any tests"
+    B: "Continuous deployment ships finished changes straight to production"
+    C: "Continuous deployment applies to infrastructure, not applications"
+    D: "Continuous deployment is a different name for the same practice"
+  answer: B
+  explanation: >
+    Continuous delivery automatically deploys tested changes into an acceptance
+    environment, so a release to production can happen at any time. Continuous deployment
+    goes a step further and deploys finished software directly to production. Both rely on
+    testing and on continuous integration first.
+  references:
+    - https://glossary.cncf.io/continuous-delivery/
+    - https://glossary.cncf.io/continuous-deployment/
+
+- id: kcna-ad-025
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    You can only roll a Deployment back to a few of its older revisions. Which field
+    controls how many old ReplicaSets it keeps for rollback?
+  options:
+    A: ".spec.minReadySeconds"
+    B: ".spec.progressDeadlineSeconds"
+    C: ".spec.strategy.rollingUpdate.maxSurge"
+    D: ".spec.revisionHistoryLimit"
+  answer: D
+  explanation: >
+    .spec.revisionHistoryLimit sets how many old ReplicaSets are kept (10 by default); the
+    rest are garbage-collected, and their revisions can no longer be rolled back to.
+    minReadySeconds, progressDeadlineSeconds and maxSurge affect how a rollout proceeds,
+    not how much history is kept.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-ad-026
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    A team wants canary releases that shift traffic gradually, check metrics at each step
+    and roll back automatically. Which tool adds this progressive delivery to Kubernetes?
+  options:
+    A: "Argo Rollouts"
+    B: "Kustomize"
+    C: "kubeadm"
+    D: "Helm"
+  answer: A
+  explanation: >
+    Argo Rollouts is a controller with CRDs that adds blue-green, canary and analysis-driven
+    progressive delivery. It can shift traffic through ingress controllers or service
+    meshes and roll back automatically based on metrics. A plain Deployment rolling update
+    cannot do this, nor can Kustomize or Helm, which only render manifests.
+  references:
+    - https://argoproj.github.io/argo-rollouts/
+
+- id: kcna-ad-027
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: hard
+  question: >
+    A cluster is managed by a GitOps agent that follows the OpenGitOps principles, with
+    automatic reconciliation enabled. An engineer runs kubectl edit to change a
+    Deployment's replica count directly in the cluster. What happens next?
+  options:
+    A: "The agent writes the new replica count back to Git as a commit"
+    B: "The manual change becomes the new desired state from now on"
+    C: "The agent stops syncing that Deployment until Git is updated"
+    D: "The agent sees the drift from Git and restores the Git state"
+  answer: D
+  explanation: >
+    Under the OpenGitOps principles, the desired state lives in a versioned source such as
+    Git, and agents continuously observe the actual state and reconcile it towards that
+    desired state. A manual change counts as drift and is reverted. To make it stick,
+    change it in Git.
+  references:
+    - https://opengitops.dev/
+
+# -------------------------------------------------------------------- debugging (10)
 
 - id: kcna-ad-014
   domain: app-delivery
@@ -383,3 +526,64 @@
     persisting them.
   references:
     - https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/
+
+- id: kcna-ad-028
+  domain: app-delivery
+  topic: debugging
+  difficulty: easy
+  question: >
+    Which command streams the logs of the Pod web-1 live, showing new lines as they are
+    written?
+  options:
+    A: "kubectl logs -f web-1"
+    B: "kubectl logs --watch-only web-1"
+    C: "kubectl attach --logs web-1"
+    D: "kubectl describe pod web-1 --follow"
+  answer: A
+  explanation: >
+    kubectl logs -f (--follow) keeps the stream open and prints new log lines as they
+    appear. The other flags do not exist, and kubectl attach connects to a running
+    process's terminal rather than its logs.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/
+
+- id: kcna-ad-029
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: >
+    You want to see the logs from every container in all Pods labeled app=web at once.
+    Which command does this?
+  options:
+    A: "kubectl logs deployment/web --label app=web --all"
+    B: "kubectl logs pods/app=web --containers"
+    C: "kubectl logs -l app=web --all-containers=true"
+    D: "kubectl get logs --selector app=web"
+  answer: C
+  explanation: >
+    -l (--selector) picks Pods by label, and --all-containers=true includes every container
+    in them. kubectl logs has no --label or --containers flags, and logs is not a resource
+    you can get.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/
+
+- id: kcna-ad-030
+  domain: app-delivery
+  topic: debugging
+  difficulty: hard
+  question: >
+    You need to read the kubelet log on node worker-3 but have no SSH access to it. You run
+    kubectl debug node/worker-3 -it --image=ubuntu. Where is the node's filesystem in the
+    debug Pod?
+  options:
+    A: "Nowhere, as debug Pods cannot see the node's filesystem"
+    B: "Mounted at /host, so the log is under /host/var/log"
+    C: "Mounted at /, replacing the ubuntu image's filesystem"
+    D: "Mounted at /node, but only after you run chroot /node"
+  answer: B
+  explanation: >
+    kubectl debug node creates a Pod on that node whose container has the node's root
+    filesystem mounted at /host, so logs such as /host/var/log/kubelet.log can be read.
+    The container keeps its own image filesystem at /.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/

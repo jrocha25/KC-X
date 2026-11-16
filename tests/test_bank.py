@@ -8,12 +8,12 @@ from kcx.bank import BankError, allocate, coverage, load_bank, load_cert, load_q
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# Planned KCNA bank: exactly 2x the per-exam allocation (see docs/EXAM_BLUEPRINTS.md).
+# Planned KCNA bank: exactly 3x the per-exam allocation, 78/51/30/21 (see docs/EXAM_BLUEPRINTS.md).
 KCNA_TOPIC_TARGETS = {
-    "k8s-fundamentals": {"core-concepts": 18, "administration": 11, "scheduling": 11, "containerization": 12},
-    "container-orchestration": {"networking": 10, "security": 9, "troubleshooting": 7, "storage": 8},
-    "app-delivery": {"application-delivery": 13, "debugging": 7},
-    "cn-architecture": {"observability": 6, "ecosystem-principles": 5, "community-collaboration": 3},
+    "k8s-fundamentals": {"core-concepts": 27, "administration": 17, "scheduling": 16, "containerization": 18},
+    "container-orchestration": {"networking": 15, "security": 14, "troubleshooting": 10, "storage": 12},
+    "app-delivery": {"application-delivery": 20, "debugging": 10},
+    "cn-architecture": {"observability": 9, "ecosystem-principles": 8, "community-collaboration": 4},
 }
 
 # Planned KCSA bank: exactly 2x the per-exam allocation (16/26/26/20/20/12).
@@ -70,7 +70,8 @@ def test_allocate_always_sums_to_total():
 def test_bank_matches_blueprint(bank, cert_id, targets):
     cert = bank.certs[cert_id]
     questions = bank.questions[cert_id]
-    assert len(questions) == 120
+    # The bank size follows the planned targets (KCNA 180, KCSA 120).
+    assert len(questions) == sum(sum(topics.values()) for topics in targets.values())
     assert coverage(cert, questions) == targets
 
 

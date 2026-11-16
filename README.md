@@ -4,7 +4,7 @@ A simple, self-hosted mock exam platform for the CNCF **KCNA** (Kubernetes and C
 
 Clone it, run one command, and practice in your browser. Nothing leaves your machine.
 
-> **Status:** Phases 0–6 are done. You can take a **full timed KCNA or KCSA mock exam** (60 questions, 90 minutes), each drawn from a **120-question bank**, drill **one domain at a time** (10, 20 or all questions, untimed), **retry your mistakes**, review flagged questions, see a scored result with explanations and references, and browse your history. CI (validator, tests, Docker build, link check) is in place; screenshots and the v1.0.0 tag come next. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status:** Phases 0–6 are done. You can take a **full timed KCNA or KCSA mock exam** (60 questions, 90 minutes), drawn from a **180-question KCNA bank** or a **120-question KCSA bank**, drill **one domain at a time** (10, 20 or all questions, untimed), **retry your mistakes**, review flagged questions, see a scored result with explanations and references, and browse your history. CI (validator, tests, Docker build, link check) is in place; screenshots and the v1.0.0 tag come next. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Features (planned for v1.0)
 
@@ -41,7 +41,7 @@ After editing questions or code, run `docker compose up --build` again.
 
 | Cert | Domains (weight) | Questions in bank |
 |---|---|---|
-| KCNA | Kubernetes Fundamentals (44%) · Container Orchestration (28%) · Cloud Native Application Delivery (16%) · Cloud Native Architecture (12%) | 120 |
+| KCNA | Kubernetes Fundamentals (44%) · Container Orchestration (28%) · Cloud Native Application Delivery (16%) · Cloud Native Architecture (12%) | 180 |
 | KCSA | Overview of Cloud Native Security (14%) · Cluster Component Security (22%) · Security Fundamentals (22%) · Threat Model (16%) · Platform Security (16%) · Compliance and Security Frameworks (10%) | 120 |
 
 Sources and details are in [docs/EXAM_BLUEPRINTS.md](docs/EXAM_BLUEPRINTS.md).
