@@ -1,0 +1,992 @@
+# KCNA — Kubernetes Fundamentals (44%) — 52 questions
+# Topics: core-concepts 18 · administration 11 · scheduling 11 · containerization 12
+# Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
+
+# ---------------------------------------------------------------- core-concepts (18)
+
+- id: kcna-kf-001
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: Which Kubernetes control plane component stores the entire state of the cluster?
+  options:
+    A: kube-scheduler
+    B: etcd
+    C: kube-controller-manager
+    D: kubelet
+  answer: B
+  explanation: >
+    etcd is a consistent, highly-available key-value store that Kubernetes uses as the
+    backing store for all cluster data. Only the kube-apiserver talks to etcd directly.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/components/
+
+- id: kcna-kf-002
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: What is the smallest deployable unit of computing that you can create and manage in Kubernetes?
+  options:
+    A: Container
+    B: Node
+    C: Pod
+    D: Deployment
+  answer: C
+  explanation: >
+    A Pod is the smallest deployable unit in Kubernetes. It wraps one or more containers
+    that share network and storage and are always co-scheduled on the same node.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/
+
+- id: kcna-kf-003
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: >
+    Which component exposes the Kubernetes API and acts as the front end through which
+    users, the CLI and all other components interact with the cluster?
+  options:
+    A: kube-apiserver
+    B: kube-proxy
+    C: etcd
+    D: cloud-controller-manager
+  answer: A
+  explanation: >
+    The kube-apiserver is the front end of the control plane. kubectl, controllers, the
+    scheduler and kubelets all read and write cluster state through it.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/components/
+
+- id: kcna-kf-004
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: What is the main responsibility of the kubelet?
+  options:
+    A: "Choosing which node each newly created Pod should be placed on"
+    B: "Maintaining the iptables or nftables rules that route Service traffic"
+    C: "Persisting the desired state of all cluster objects in a key-value store"
+    D: "Ensuring the containers in PodSpecs are running and healthy on its own node"
+  answer: D
+  explanation: >
+    The kubelet is an agent on every node. It takes PodSpecs (mostly from the API server)
+    and ensures the containers described in them are running and healthy, via the
+    container runtime. Scheduling is done by kube-scheduler; Service rules by kube-proxy.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/components/
+
+- id: kcna-kf-005
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: Which statement best describes how Kubernetes controllers work?
+  options:
+    A: "They run a single time when an object is created and then exit"
+    B: "They execute imperative kubectl commands strictly in the order received"
+    C: "They watch the cluster and act to move current state toward desired state"
+    D: "They run inside every container and restart the main process when it crashes"
+  answer: C
+  explanation: >
+    Controllers are control loops. Each one watches the shared state through the API
+    server and makes changes to drive the current state toward the desired state
+    declared in object specs (reconciliation).
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/controller/
+
+- id: kcna-kf-006
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: Which of the following Kubernetes objects is NOT namespaced?
+  options:
+    A: Node
+    B: Service
+    C: ConfigMap
+    D: Pod
+  answer: A
+  explanation: >
+    Nodes, PersistentVolumes, StorageClasses and Namespaces themselves are cluster-scoped.
+    Pods, Services, ConfigMaps, Deployments and most workload objects live inside a
+    namespace. `kubectl api-resources --namespaced=false` lists cluster-scoped kinds.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+
+- id: kcna-kf-007
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: When you create a Deployment, which object does the Deployment controller create directly to manage the Pods?
+  options:
+    A: StatefulSet
+    B: ReplicaSet
+    C: DaemonSet
+    D: ReplicationController
+  answer: B
+  explanation: >
+    A Deployment manages ReplicaSets, and each ReplicaSet maintains a stable set of Pod
+    replicas. During a rolling update the Deployment creates a new ReplicaSet and scales
+    the old one down.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-kf-008
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: >
+    You need a log-collection agent to run exactly one Pod on every node in the cluster,
+    including nodes added later. Which workload resource fits best?
+  options:
+    A: Deployment
+    B: Job
+    C: StatefulSet
+    D: DaemonSet
+  answer: D
+  explanation: >
+    A DaemonSet ensures that all (or selected) nodes run a copy of a Pod. When nodes join
+    the cluster, Pods are added to them automatically — ideal for node-level agents such as
+    log collectors and monitoring exporters.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/
+
+- id: kcna-kf-009
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    A database cluster needs each replica to keep a stable network identity (for example
+    db-0, db-1) and its own persistent volume across rescheduling. Which workload resource
+    should you use?
+  options:
+    A: StatefulSet
+    B: Deployment
+    C: ReplicaSet
+    D: DaemonSet
+  answer: A
+  explanation: >
+    StatefulSets give each Pod a sticky, ordinal identity and, through
+    volumeClaimTemplates, a dedicated PersistentVolumeClaim that follows the Pod when it is
+    rescheduled. Deployments treat Pods as interchangeable.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/
+
+- id: kcna-kf-010
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: Which resource runs a task to completion on a repeating schedule, such as a nightly backup?
+  options:
+    A: Job
+    B: DaemonSet
+    C: CronJob
+    D: Deployment
+  answer: C
+  explanation: >
+    A CronJob creates Jobs on a repeating schedule written in cron format. A Job alone runs
+    Pods to completion once.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/
+
+- id: kcna-kf-011
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: How does a Service determine which Pods should receive its traffic?
+  options:
+    A: By the Pod names listed in the Service spec
+    B: By a label selector matching the Pods' labels
+    C: "By the node or zone where the Pods are currently running"
+    D: "By the container image and tag referenced by the Pods"
+  answer: B
+  explanation: >
+    A Service uses spec.selector, a set of label key/value pairs. Every ready Pod whose
+    labels match the selector becomes an endpoint of the Service.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+
+- id: kcna-kf-012
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: What is the key difference between labels and annotations?
+  options:
+    A: "Labels can only be set on Pods, while annotations work on any object"
+    B: "Annotations are encrypted at rest in etcd, while labels are plain text"
+    C: "Labels are set by users, while annotations can only be written by controllers"
+    D: "Labels identify and select objects; annotations hold non-identifying metadata"
+  answer: D
+  explanation: >
+    Labels are meant for identifying and grouping objects and are queried by selectors.
+    Annotations attach arbitrary non-identifying metadata (build info, tool config,
+    contact details) and cannot be used in selectors.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+
+- id: kcna-kf-013
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    Which control plane component runs built-in controllers such as the node controller,
+    the Job controller and the EndpointSlice controller?
+  options:
+    A: kube-scheduler
+    B: kube-apiserver
+    C: kube-controller-manager
+    D: kubelet
+  answer: C
+  explanation: >
+    kube-controller-manager compiles many logically separate controllers into a single
+    binary and process. Cloud-specific controllers run separately in the
+    cloud-controller-manager.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/components/
+
+- id: kcna-kf-014
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: In a Deployment manifest, which field sets how many Pod copies should run?
+  options:
+    A: spec.replicas
+    B: spec.template.replicas
+    C: metadata.replicas
+    D: spec.selector.count
+  answer: A
+  explanation: >
+    spec.replicas declares the desired number of Pods (default 1). The Deployment's
+    ReplicaSet keeps that many Pods matching spec.selector running.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-kf-015
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: Which apiVersion is used for a Deployment object in current Kubernetes versions?
+  options:
+    A: v1
+    B: extensions/v1beta1
+    C: batch/v1
+    D: apps/v1
+  answer: D
+  explanation: >
+    Deployments, ReplicaSets, StatefulSets and DaemonSets belong to the apps API group, so
+    their apiVersion is apps/v1. Core objects like Pods and Services use v1; Jobs and
+    CronJobs use batch/v1.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-kf-016
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: What does a CustomResourceDefinition (CRD) allow you to do?
+  options:
+    A: Replace the default container runtime
+    B: "Extend the Kubernetes API with your own custom resource types"
+    C: Define custom scheduling algorithms for Pods
+    D: Change the storage backend from etcd to another database
+  answer: B
+  explanation: >
+    A CRD registers a new resource type with the API server, which then serves and
+    stores objects of that kind like built-in ones. Combined with a custom controller this
+    forms the Operator pattern.
+  references:
+    - https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/
+
+- id: kcna-kf-017
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: hard
+  question: >
+    You submit an apps/v1 Deployment whose spec.selector.matchLabels is app=web, but whose
+    Pod template has the label app=frontend. What happens?
+  options:
+    A: "The Deployment is accepted, but its ReplicaSet never creates any Pods"
+    B: "The Deployment is created and its selector is rewritten to match the template"
+    C: "The API server rejects it because the selector does not match the labels"
+    D: "The Pods are created with both labels merged so that selector and template match"
+  answer: C
+  explanation: >
+    For apps/v1 Deployments the selector is required and must match
+    spec.template.metadata.labels; otherwise validation fails and the API server rejects
+    the object. The selector is also immutable after creation.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-kf-018
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: >
+    A ReplicaSet is configured with replicas set to 3. You manually delete one of its
+    Pods. What happens next?
+  options:
+    A: The ReplicaSet creates a new Pod to get back to 3 replicas
+    B: The ReplicaSet scales down to 2 replicas permanently
+    C: The deleted Pod is restored from etcd with the same name and UID
+    D: Nothing happens until you run kubectl rollout restart
+  answer: A
+  explanation: >
+    The ReplicaSet controller notices that only 2 matching Pods exist while 3 are desired
+    and creates a replacement Pod (with a new name and UID). This is the reconciliation
+    loop in action.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
+
+# --------------------------------------------------------------- administration (11)
+
+- id: kcna-kf-019
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which command lists all Pods in the kube-system namespace?
+  options:
+    A: kubectl get pods --all
+    B: kubectl get pods -n kube-system
+    C: kubectl list pods kube-system
+    D: kubectl describe namespace kube-system --pods
+  answer: B
+  explanation: >
+    The -n (or --namespace) flag scopes a kubectl command to a namespace. Use -A /
+    --all-namespaces to list across every namespace.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/
+
+- id: kcna-kf-020
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    Your team stores manifests in Git and wants to re-run the same command whenever a file
+    changes, so Kubernetes updates existing objects instead of failing. Which command
+    supports this declarative workflow?
+  options:
+    A: kubectl create -f manifest.yaml
+    B: kubectl run -f manifest.yaml
+    C: kubectl apply -f manifest.yaml
+    D: kubectl replace --force -f manifest.yaml
+  answer: C
+  explanation: >
+    kubectl apply is the declarative command: it creates objects that do not exist and
+    patches those that do, so it can be run repeatedly. kubectl create fails if the object
+    already exists; replace --force deletes and recreates.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/
+
+- id: kcna-kf-021
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: By default, where does kubectl look for its cluster connection and credential configuration?
+  options:
+    A: /etc/kubernetes/kubectl.conf
+    B: ~/.kubectl/settings.json
+    C: /var/lib/kubelet/config.yaml
+    D: ~/.kube/config
+  answer: D
+  explanation: >
+    kubectl reads the kubeconfig file at $HOME/.kube/config unless the KUBECONFIG
+    environment variable or the --kubeconfig flag points elsewhere.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
+
+- id: kcna-kf-022
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    Your kubeconfig contains entries for a staging and a production cluster. Which command
+    switches kubectl to the production context?
+  options:
+    A: kubectl config use-context production
+    B: "kubectl context set --current production"
+    C: "kubectl cluster switch --context production"
+    D: "kubectl set context production --default"
+  answer: A
+  explanation: >
+    A context ties together a cluster, a user and an optional default namespace.
+    `kubectl config use-context <name>` sets the current context; `kubectl config
+    get-contexts` lists them.
+  references:
+    - https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/
+
+- id: kcna-kf-023
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which tool provides `init` and `join` commands to bootstrap a minimum viable Kubernetes cluster?
+  options:
+    A: kubectl
+    B: kubeadm
+    C: kubelet
+    D: helm
+  answer: B
+  explanation: >
+    kubeadm performs the actions needed to get a minimum viable, best-practice cluster up:
+    `kubeadm init` sets up a control plane node and `kubeadm join` adds nodes.
+  references:
+    - https://kubernetes.io/docs/reference/setup-tools/kubeadm/
+
+- id: kcna-kf-024
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    A cluster admin wants to cap the total CPU and memory, and the number of Pods, that a
+    single team can use inside its namespace. Which object should be used?
+  options:
+    A: LimitRange
+    B: PriorityClass
+    C: ResourceQuota
+    D: PodDisruptionBudget
+  answer: C
+  explanation: >
+    A ResourceQuota constrains aggregate resource consumption (CPU, memory, object counts)
+    per namespace. A LimitRange instead sets per-container/Pod defaults and min/max values.
+  references:
+    - https://kubernetes.io/docs/concepts/policy/resource-quotas/
+
+- id: kcna-kf-025
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    Developers keep deploying containers without resource requests. Which object can
+    automatically apply default requests and limits to containers in a namespace?
+  options:
+    A: LimitRange
+    B: ResourceQuota
+    C: HorizontalPodAutoscaler
+    D: RuntimeClass
+  answer: A
+  explanation: >
+    A LimitRange can set default requests/limits for containers that do not specify them,
+    and enforce minimum/maximum values per container or Pod in a namespace.
+  references:
+    - https://kubernetes.io/docs/concepts/policy/limit-range/
+
+- id: kcna-kf-026
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    Before patching a node's operating system you want to stop new Pods from landing on it
+    and safely evict the Pods already running there. Which command does both?
+  options:
+    A: kubectl cordon <node>
+    B: kubectl delete node <node>
+    C: kubectl taint node <node> maintenance=true:NoSchedule
+    D: kubectl drain <node>
+  answer: D
+  explanation: >
+    kubectl drain first cordons the node (marks it unschedulable) and then evicts its Pods,
+    respecting PodDisruptionBudgets. kubectl cordon alone only marks it unschedulable;
+    `kubectl uncordon` reverses it after maintenance.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/
+
+- id: kcna-kf-027
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: Approximately how often does the Kubernetes project ship a new minor release?
+  options:
+    A: "About once every month"
+    B: "About once a year"
+    C: "About three times a year"
+    D: "About once every two years"
+  answer: C
+  explanation: >
+    Since 2021 Kubernetes ships roughly three minor releases per year (about every 15
+    weeks), and the project maintains release branches for the most recent three minor
+    versions.
+  references:
+    - https://kubernetes.io/releases/
+
+- id: kcna-kf-028
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which kubectl command shows documentation for the fields of a resource, for example `spec.containers` of a Pod?
+  options:
+    A: kubectl describe pod.spec.containers
+    B: kubectl explain pod.spec.containers
+    C: kubectl docs pod.spec.containers
+    D: kubectl help pod.spec.containers
+  answer: B
+  explanation: >
+    kubectl explain prints the schema documentation of a resource and its nested fields,
+    straight from the API server. kubectl describe shows the live state of an existing
+    object.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/
+
+- id: kcna-kf-029
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: hard
+  question: >
+    According to the Kubernetes version skew policy, which kubelet version is supported
+    with a kube-apiserver at v1.34?
+  options:
+    A: v1.31 (three minor versions older)
+    B: "v1.35 (only one minor version newer)"
+    C: v1.36 (two minor versions newer)
+    D: v1.30 (four minor versions older)
+  answer: A
+  explanation: >
+    The kubelet must not be newer than kube-apiserver and may be up to three minor versions
+    older (since v1.28; previously two). So v1.31–v1.34 kubelets are supported with a
+    v1.34 API server. This is why control planes are upgraded before nodes.
+  references:
+    - https://kubernetes.io/releases/version-skew-policy/
+
+# ------------------------------------------------------------------- scheduling (11)
+
+- id: kcna-kf-030
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: easy
+  question: Which component decides which node a newly created Pod should run on?
+  options:
+    A: kubelet
+    B: kube-proxy
+    C: kube-scheduler
+    D: etcd
+  answer: C
+  explanation: >
+    kube-scheduler watches for Pods with no assigned node and selects a node for each one
+    by filtering infeasible nodes and scoring the remaining ones. It then writes the
+    binding to the API server; the kubelet on that node starts the Pod.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/
+
+- id: kcna-kf-031
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: easy
+  question: What is the simplest way to make a Pod run only on nodes that carry the label disktype=ssd?
+  options:
+    A: "Add a toleration for disktype=ssd to the Pod spec"
+    B: "Add a nodeSelector of disktype ssd to the Pod spec"
+    C: "Set spec.nodeName to ssd in the Pod spec"
+    D: "Add the label disktype=ssd to the Pod's own metadata"
+  answer: B
+  explanation: >
+    nodeSelector is the simplest node selection constraint: the Pod is only scheduled on
+    nodes that have all the listed labels. Tolerations do not attract Pods; they only allow
+    them onto tainted nodes.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+
+- id: kcna-kf-032
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: What is the purpose of a taint on a node?
+  options:
+    A: "It attracts Pods that have matching labels to the node"
+    B: It marks the node as failed so it gets replaced
+    C: It limits the CPU available on the node
+    D: "It repels any Pods that do not have a matching toleration"
+  answer: D
+  explanation: >
+    Taints are applied to nodes and repel Pods; tolerations are applied to Pods and allow
+    (but do not force) scheduling onto nodes with matching taints. To force placement,
+    combine tolerations with node affinity or nodeSelector.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+
+- id: kcna-kf-033
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: hard
+  question: >
+    A Pod uses node affinity of type requiredDuringSchedulingIgnoredDuringExecution for
+    zone=us-east-1a. After the Pod is running, someone removes that label from its node.
+    What happens?
+  options:
+    A: The Pod keeps running on the node
+    B: The Pod is evicted immediately
+    C: The Pod is rescheduled to another node in us-east-1a
+    D: The Pod is marked as Failed but not removed
+  answer: A
+  explanation: >
+    "requiredDuringScheduling" makes the rule mandatory when the scheduler places the Pod;
+    "IgnoredDuringExecution" means label changes afterwards do not affect Pods that are
+    already running.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+
+- id: kcna-kf-034
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: Which container setting does kube-scheduler use to decide whether a node has enough capacity for a Pod?
+  options:
+    A: resources.limits
+    B: The container image size
+    C: resources.requests
+    D: The node's current real-time CPU usage
+  answer: C
+  explanation: >
+    The scheduler sums the resource requests of a Pod's containers and only places the Pod
+    on a node whose allocatable capacity minus the requests of Pods already there can fit
+    it. Limits are enforced at runtime by the kubelet and container runtime.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+- id: kcna-kf-035
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    A new Pod stays in the Pending state and its events show
+    "0/3 nodes are available: 3 Insufficient cpu". What is the most likely cause?
+  options:
+    A: "The container image cannot be pulled from the configured registry"
+    B: "The Pod requests more CPU than any node has left to allocate"
+    C: "The container keeps crashing shortly after it starts on each node"
+    D: "The Service selecting the Pod has no ready endpoints behind it"
+  answer: B
+  explanation: >
+    "Insufficient cpu" is a scheduling failure: no node has enough unrequested allocatable
+    CPU for the Pod's requests. Lower the request, free capacity or add nodes. Image pull
+    errors and crashes happen after scheduling.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/
+
+- id: kcna-kf-036
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    You want the replicas of a web Deployment to avoid running on the same node as each
+    other, so a single node failure does not take down all of them. Which feature
+    expresses this?
+  options:
+    A: Pod anti-affinity
+    B: Node affinity
+    C: A PodDisruptionBudget
+    D: A ResourceQuota
+  answer: A
+  explanation: >
+    Inter-pod anti-affinity lets you say "do not schedule this Pod on a node (or in a
+    topology domain) that already runs Pods with these labels". Node affinity only
+    considers node labels. Topology spread constraints are another option for even
+    spreading.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+
+- id: kcna-kf-037
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    Which Pod spec field lets you control how evenly Pods are spread across failure domains
+    such as zones, using a maxSkew value?
+  options:
+    A: affinity.nodeAffinity
+    B: tolerations
+    C: priorityClassName
+    D: topologySpreadConstraints
+  answer: D
+  explanation: >
+    topologySpreadConstraints spread matching Pods across topology domains (zones, nodes,
+    regions) identified by a node label (topologyKey). maxSkew is the maximum allowed
+    difference in Pod count between domains.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/topology-spread-constraints/
+
+- id: kcna-kf-038
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    The cluster is full and a critical Pod cannot be scheduled. Which mechanism can allow
+    the scheduler to evict lower-priority Pods to make room for it?
+  options:
+    A: Node affinity
+    B: PriorityClass with preemption
+    C: Horizontal Pod Autoscaler
+    D: LimitRange
+  answer: B
+  explanation: >
+    Pods can be given a priority through a PriorityClass. If a high-priority Pod cannot be
+    scheduled, the scheduler may preempt (evict) lower-priority Pods on a node to make room.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/
+
+- id: kcna-kf-039
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: hard
+  question: >
+    You add the taint dedicated=gpu:NoExecute to a node. What happens to Pods already
+    running on that node that do not tolerate the taint?
+  options:
+    A: They keep running; only new Pods are blocked
+    B: They are restarted in place with a toleration added automatically
+    C: They are evicted from the node
+    D: They are paused until the taint is removed
+  answer: C
+  explanation: >
+    NoSchedule only affects new scheduling and PreferNoSchedule is a soft version. The
+    NoExecute effect also evicts running Pods that do not tolerate the taint (optionally
+    after tolerationSeconds if they do tolerate it).
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+
+- id: kcna-kf-040
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    In a kubeadm cluster, ordinary application Pods are not scheduled onto control plane
+    nodes. What normally prevents this?
+  options:
+    A: "Control plane nodes do not run a kubelet at all"
+    B: "The scheduler is hard-coded to skip any node named master"
+    C: "Control plane nodes do not have a container runtime"
+    D: "A NoSchedule taint on the control plane nodes"
+  answer: D
+  explanation: >
+    kubeadm taints control plane nodes with node-role.kubernetes.io/control-plane:NoSchedule.
+    Only Pods that tolerate this taint (such as some system components) are scheduled
+    there. Removing the taint allows regular workloads on them.
+  references:
+    - https://kubernetes.io/docs/reference/labels-annotations-taints/
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+
+# -------------------------------------------------------------- containerization (12)
+
+- id: kcna-kf-041
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: What is the relationship between a container image and a container?
+  options:
+    A: A container is a read-only template; an image is a running instance of it
+    B: "An image is a read-only package; a container is a running instance of that image"
+    C: "They are two different names for exactly the same object"
+    D: An image is a virtual machine disk; a container is the VM
+  answer: B
+  explanation: >
+    A container image is an immutable, layered package containing the application and
+    everything needed to run it. A container is a runtime instance created from an image,
+    with a thin writable layer on top.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/
+
+- id: kcna-kf-042
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Which organization maintains open standards for container image formats and runtimes?
+  options:
+    A: Open Container Initiative (OCI)
+    B: Cloud Native Computing Foundation Technical Oversight Committee
+    C: Internet Engineering Task Force (IETF)
+    D: Kubernetes SIG Node
+  answer: A
+  explanation: >
+    The OCI, a Linux Foundation project, publishes the Image Specification, Runtime
+    Specification and Distribution Specification so that images and runtimes from different
+    vendors interoperate.
+  references:
+    - https://opencontainers.org/
+
+- id: kcna-kf-043
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Which interface does the kubelet use to talk to container runtimes such as containerd or CRI-O?
+  options:
+    A: CNI (Container Network Interface)
+    B: CSI (Container Storage Interface)
+    C: CRI (Container Runtime Interface)
+    D: SMI (Service Mesh Interface)
+  answer: C
+  explanation: >
+    The CRI is a gRPC API between the kubelet and the container runtime. It lets
+    Kubernetes use any compliant runtime without recompiling. CNI is for networking and CSI
+    for storage.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/cri/
+
+- id: kcna-kf-044
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Which of the following is NOT a container runtime?
+  options:
+    A: containerd
+    B: CRI-O
+    C: runc
+    D: Helm
+  answer: D
+  explanation: >
+    Helm is a package manager for Kubernetes manifests (charts). containerd and CRI-O are
+    high-level CRI runtimes, and runc is the low-level OCI runtime that actually creates
+    containers.
+  references:
+    - https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+
+- id: kcna-kf-045
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    The dockershim component was removed from the kubelet in Kubernetes v1.24. What does
+    this mean in practice?
+  options:
+    A: "Container images built with Docker can no longer run on any Kubernetes cluster"
+    B: "Nodes need a CRI runtime such as containerd or CRI-O, not Docker Engine directly"
+    C: "Kubernetes now ships and maintains its own built-in container runtime on every node"
+    D: Docker Compose files can be applied directly with kubectl
+  answer: B
+  explanation: >
+    Dockershim let the kubelet talk to Docker Engine, which does not implement the CRI.
+    After its removal, nodes use a CRI runtime (containerd, CRI-O, or Docker via the
+    external cri-dockerd adapter). Images built with Docker are OCI images and still work.
+  references:
+    - https://kubernetes.io/blog/2022/02/17/dockershim-faq/
+
+- id: kcna-kf-046
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: Which Linux kernel features are the foundation of container isolation and resource limiting?
+  options:
+    A: "SELinux and AppArmor security profiles"
+    B: "iptables and IPVS packet filtering rules"
+    C: "Hypervisors and hardware virtual CPUs"
+    D: Namespaces and control groups (cgroups)
+  answer: D
+  explanation: >
+    Namespaces isolate what a process can see (PIDs, network, mounts, users, etc.), and
+    cgroups limit and account for the resources it can use (CPU, memory, I/O). SELinux and
+    AppArmor add security hardening on top.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/cgroups/
+
+- id: kcna-kf-047
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    Your Go service image is 1 GB because it includes the whole compiler toolchain. Which
+    Dockerfile technique is the standard way to ship only the compiled binary?
+  options:
+    A: "A multi-stage build that copies only the binary into a small final image"
+    B: "Adding RUN instructions at the end of the Dockerfile to delete the toolchain"
+    C: "Using the latest tag of the golang base image to get smaller layers"
+    D: Running the build inside the Kubernetes Pod at startup
+  answer: A
+  explanation: >
+    Multi-stage builds use several FROM stages; the final stage copies only the needed
+    artifacts (COPY --from=build) onto a small base image. Deleting files in a later RUN
+    does not shrink earlier layers.
+  references:
+    - https://docs.docker.com/build/building/multi-stage/
+
+- id: kcna-kf-048
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    Why might a team reference an image as registry.example.com/app@sha256:<digest>
+    instead of registry.example.com/app:1.4?
+  options:
+    A: "Images pulled by digest download faster because their layers are cached"
+    B: "Tags are not supported by containerd or CRI-O, only by Docker Engine"
+    C: "A digest pins the exact image content; a tag can be moved to another image"
+    D: "A digest always resolves to the newest version pushed to the registry"
+  answer: C
+  explanation: >
+    A tag is a mutable pointer that can be re-pushed to point at different content. A
+    digest is a content hash, so pulling by digest always yields the same bytes — useful
+    for reproducibility and supply-chain security.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/images/
+
+- id: kcna-kf-049
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: hard
+  question: >
+    A container spec uses image nginx:latest and does not set imagePullPolicy. Which pull
+    policy does Kubernetes apply by default?
+  options:
+    A: IfNotPresent
+    B: Always
+    C: Never
+    D: OnFailure
+  answer: B
+  explanation: >
+    When imagePullPolicy is omitted, Kubernetes sets it to Always if the tag is :latest or
+    the tag is omitted, and to IfNotPresent for any other tag. OnFailure is a restartPolicy
+    value, not a pull policy.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/images/
+
+- id: kcna-kf-050
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: What role does runc play in a typical containerd-based Kubernetes node?
+  options:
+    A: "It decides which Pods should be scheduled onto the node"
+    B: "It is the high-level daemon the kubelet talks to over the CRI gRPC API"
+    C: "It pushes and stores image layers in the container registry"
+    D: "It is the low-level OCI runtime that actually creates the container processes"
+  answer: D
+  explanation: >
+    The kubelet talks to containerd over the CRI. containerd manages images and container
+    lifecycle and delegates the actual creation of containers (namespaces, cgroups) to a
+    low-level OCI runtime, commonly runc.
+  references:
+    - https://github.com/opencontainers/runc
+    - https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+
+- id: kcna-kf-051
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: hard
+  question: >
+    A platform team wants some untrusted workloads to run with a sandboxed runtime such as
+    gVisor or Kata Containers while other Pods keep the default runtime. Which Kubernetes
+    feature lets a Pod choose its runtime configuration?
+  options:
+    A: RuntimeClass, referenced by runtimeClassName in the Pod spec
+    B: PriorityClass, referenced by priorityClassName in the Pod spec
+    C: StorageClass, referenced by a PersistentVolumeClaim
+    D: An annotation on the Namespace
+  answer: A
+  explanation: >
+    A RuntimeClass maps a name to a runtime handler configured on the nodes. Pods select
+    it with spec.runtimeClassName, so different Pods in the same cluster can use different
+    runtimes (e.g. runc vs gVisor/Kata).
+  references:
+    - https://kubernetes.io/docs/concepts/containers/runtime-class/
+
+- id: kcna-kf-052
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Compared to virtual machines, what is a defining characteristic of containers?
+  options:
+    A: Each container runs its own full guest operating system kernel
+    B: Containers can only run on bare metal
+    C: Containers share the host operating system kernel
+    D: Containers require a hypervisor to start
+  answer: C
+  explanation: >
+    Containers are isolated processes that share the host kernel, which makes them lighter
+    and faster to start than VMs, each of which boots its own guest kernel on a hypervisor.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/

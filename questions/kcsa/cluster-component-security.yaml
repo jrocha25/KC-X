@@ -1,0 +1,554 @@
+# KCSA — Kubernetes Cluster Component Security (22%) — 26 questions
+# Topics: api-server 4 · controller-manager 2 · scheduler 2 · kubelet 3 · container-runtime 2
+#         kube-proxy 2 · pod 2 · etcd 3 · container-networking 2 · client-security 2 · storage 2
+# Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
+
+# ---------------------------------------------------------------- api-server (4)
+
+- id: kcsa-cc-001
+  domain: cluster-component-security
+  topic: api-server
+  difficulty: easy
+  question: In which order does the kube-apiserver process an incoming request?
+  options:
+    A: "Admission control, then authentication, then authorization"
+    B: "Authentication, then authorization, then admission control"
+    C: "Authorization, then admission control, then authentication"
+    D: "Authentication, then admission control, then authorization"
+  answer: B
+  explanation: >
+    The API server first establishes who is calling (authentication), then decides
+    whether that identity may perform the action (authorization), and finally runs
+    admission controllers that can mutate or reject the object before it is stored.
+  references:
+    - https://kubernetes.io/docs/concepts/security/controlling-access/
+
+- id: kcsa-cc-002
+  domain: cluster-component-security
+  topic: api-server
+  difficulty: medium
+  question: Which kube-apiserver authorization setting is recommended for a production cluster?
+  options:
+    A: "--authorization-mode=Node,RBAC"
+    B: "--authorization-mode=AlwaysAllow"
+    C: "--authorization-mode=ABAC"
+    D: "--authorization-mode=RBAC,AlwaysAllow"
+  answer: A
+  explanation: >
+    The Node authorizer restricts kubelets to the objects they need, and RBAC handles
+    everyone else. AlwaysAllow permits every request, even at the end of a chain, where it
+    allows anything RBAC did not grant. ABAC policies are static files that are hard to
+    manage and need an API server restart to change.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/authorization/
+    - https://kubernetes.io/docs/reference/access-authn-authz/node/
+
+- id: kcsa-cc-003
+  domain: cluster-component-security
+  topic: api-server
+  difficulty: medium
+  question: >
+    Anonymous authentication is enabled on the API server. How is a request treated if
+    no authenticator rejects or identifies it?
+  options:
+    A: "As user admin, in group system:masters"
+    B: "It is rejected with 401 Unauthorized"
+    C: "As the default ServiceAccount of its namespace"
+    D: "As user system:anonymous, in group system:unauthenticated"
+  answer: D
+  explanation: >
+    With anonymous requests enabled, an unidentified request gets the username
+    system:anonymous and the group system:unauthenticated. Authorization then decides what
+    it may do, so RBAC bindings to these subjects must be kept to a minimum.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/authentication/
+
+- id: kcsa-cc-004
+  domain: cluster-component-security
+  topic: api-server
+  difficulty: medium
+  question: >
+    Members of which group bypass every RBAC check, so credentials in that group should
+    not be issued for day-to-day use?
+  options:
+    A: system:authenticated
+    B: system:nodes
+    C: system:masters
+    D: system:serviceaccounts
+  answer: C
+  explanation: >
+    system:masters is a super-user group: requests from its members are allowed without
+    consulting RBAC, and removing RoleBindings cannot revoke that access. Kubernetes
+    advises against adding users to it except for break-glass credentials.
+  references:
+    - https://kubernetes.io/docs/concepts/security/rbac-good-practices/
+    - https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+
+# ---------------------------------------------------------------- controller-manager (2)
+
+- id: kcsa-cc-005
+  domain: cluster-component-security
+  topic: controller-manager
+  difficulty: medium
+  question: >
+    What does starting kube-controller-manager with --use-service-account-credentials=true
+    achieve?
+  options:
+    A: "Each controller uses its own ServiceAccount, scoped by RBAC"
+    B: "Every Pod receives a long-lived ServiceAccount token Secret"
+    C: "Controllers authenticate to etcd with ServiceAccount tokens"
+    D: "The controller manager stops signing ServiceAccount tokens"
+  answer: A
+  explanation: >
+    With this flag, each controller loop calls the API with its own ServiceAccount in
+    kube-system, and the default RBAC roles grant each one only what it needs. Without it,
+    all controllers share the controller manager's own, broader credentials.
+  references:
+    - https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
+    - https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+
+- id: kcsa-cc-006
+  domain: cluster-component-security
+  topic: controller-manager
+  difficulty: easy
+  question: >
+    kube-controller-manager serves health and metrics on a secure port. If nothing outside
+    the control plane node needs it, which --bind-address is the safest choice?
+  options:
+    A: 0.0.0.0
+    B: "The node's public IP address"
+    C: 127.0.0.1
+    D: "The first address of the Service CIDR"
+  answer: C
+  explanation: >
+    Binding to the loopback address keeps the port reachable only from the node itself.
+    0.0.0.0 or a public address exposes it to the network, which hardening benchmarks such
+    as the CIS Kubernetes Benchmark flag.
+  references:
+    - https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/
+    - https://www.cisecurity.org/benchmark/kubernetes
+
+# ---------------------------------------------------------------- scheduler (2)
+
+- id: kcsa-cc-007
+  domain: cluster-component-security
+  topic: scheduler
+  difficulty: hard
+  question: >
+    Why is the ability to set spec.nodeName when creating a Pod relevant to security?
+  options:
+    A: "It changes which kubelet is allowed to sign the Pod's ServiceAccount token"
+    B: "It bypasses the scheduler, so NoSchedule taints are not applied"
+    C: "It moves the Pod into the node's host network namespace"
+    D: "It turns off Pod Security Admission checks for that Pod"
+  answer: B
+  explanation: >
+    A Pod with nodeName set is not scheduled: the kubelet on that node simply runs it.
+    Scheduler checks such as NoSchedule taints and affinity are skipped, so a user can
+    place a Pod on a chosen node, such as one reserved for sensitive workloads. Admission
+    control (including Pod Security Admission) still applies.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+
+- id: kcsa-cc-008
+  domain: cluster-component-security
+  topic: scheduler
+  difficulty: medium
+  question: >
+    How can sensitive workloads be kept on a dedicated set of nodes, away from general
+    workloads?
+  options:
+    A: "Give the sensitive Pods a higher PriorityClass than others"
+    B: "Name the namespace after the dedicated nodes"
+    C: "Set hostNetwork: true on the sensitive Pods"
+    D: "Taint the nodes; add tolerations and node affinity"
+  answer: D
+  explanation: >
+    Taints keep other Pods off the dedicated nodes, and tolerations plus node affinity
+    (or a nodeSelector) attract the sensitive Pods to them. Priority only affects
+    preemption, namespace names do not affect scheduling, and hostNetwork reduces
+    isolation.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+
+# ---------------------------------------------------------------- kubelet (3)
+
+- id: kcsa-cc-009
+  domain: cluster-component-security
+  topic: kubelet
+  difficulty: easy
+  question: >
+    Which kubelet setting makes it answer unauthenticated requests to its HTTPS API with
+    401 Unauthorized?
+  options:
+    A: "--read-only-port=10255"
+    B: "--authorization-mode=AlwaysAllow"
+    C: "--rotate-certificates=false"
+    D: "--anonymous-auth=false"
+  answer: D
+  explanation: >
+    By default, requests not rejected by another authenticator are treated as anonymous.
+    Starting the kubelet with --anonymous-auth=false disables that and returns 401. It
+    should be combined with --authorization-mode=Webhook so authenticated requests are
+    checked against the API server.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/
+
+- id: kcsa-cc-010
+  domain: cluster-component-security
+  topic: kubelet
+  difficulty: hard
+  question: >
+    A monitoring account is granted only the get verb on the nodes/proxy resource. Why
+    is this riskier than it looks?
+  options:
+    A: "It lets the account read etcd data directly"
+    B: "It can authorize running commands in any container on the node"
+    C: "It allows the account to change the node's taints"
+    D: "It lets the account delete the Node object"
+  answer: B
+  explanation: >
+    nodes/proxy gives access to every kubelet API not mapped to a narrower subresource,
+    including exec. Some of those endpoints use WebSockets over HTTP GET, so even get on
+    nodes/proxy is not read-only. Use narrower subresources such as nodes/metrics or
+    nodes/stats for monitoring.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/kubelet-authn-authz/
+    - https://kubernetes.io/docs/concepts/security/rbac-good-practices/
+
+- id: kcsa-cc-011
+  domain: cluster-component-security
+  topic: kubelet
+  difficulty: medium
+  question: >
+    Which admission plugin, used together with the Node authorizer, limits a kubelet to
+    modifying only its own Node object and the Pods bound to that node?
+  options:
+    A: AlwaysPullImages
+    B: LimitRanger
+    C: NodeRestriction
+    D: ServiceAccount
+  answer: C
+  explanation: >
+    The Node authorizer limits which objects a kubelet can read, and NodeRestriction
+    limits what it can write: only its own Node and Pods on it. This contains the damage
+    if one node's credentials are stolen.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/node/
+    - https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
+
+# ---------------------------------------------------------------- container-runtime (2)
+
+- id: kcsa-cc-012
+  domain: cluster-component-security
+  topic: container-runtime
+  difficulty: hard
+  question: >
+    A Pod mounts the node's /run/containerd/containerd.sock through a hostPath volume.
+    What does this effectively give the Pod?
+  options:
+    A: "Control of every container on the node, and a path to the host"
+    B: "Read-only access to the container log files stored on the node's disk"
+    C: "The ability to pull images faster from the registry"
+    D: "Permission to call the Kubernetes API as the kubelet"
+  answer: A
+  explanation: >
+    The runtime socket is the runtime's full management API. Anything that can talk to it
+    can start privileged containers, inspect or exec into other containers and bypass
+    Kubernetes admission and audit entirely. Treat access to it as root on the node.
+  references:
+    - https://kubernetes.io/docs/concepts/security/api-server-bypass-risks/
+    - https://kubernetes.io/docs/concepts/storage/volumes/
+
+- id: kcsa-cc-013
+  domain: cluster-component-security
+  topic: container-runtime
+  difficulty: easy
+  question: >
+    Which interface does the kubelet use to talk to container runtimes such as containerd
+    and CRI-O?
+  options:
+    A: "Container Network Interface (CNI)"
+    B: "Container Runtime Interface (CRI)"
+    C: "Container Storage Interface (CSI)"
+    D: "OCI Distribution Specification"
+  answer: B
+  explanation: >
+    The CRI is the gRPC API between the kubelet and the container runtime. CNI is for
+    Pod networking, CSI for storage drivers, and the OCI Distribution Specification
+    defines how registries serve images.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/cri/
+
+# ---------------------------------------------------------------- kube-proxy (2)
+
+- id: kcsa-cc-014
+  domain: cluster-component-security
+  topic: kube-proxy
+  difficulty: medium
+  question: Which statement about kube-proxy and NetworkPolicy is correct?
+  options:
+    A: "kube-proxy enforces NetworkPolicy with iptables rules on each node"
+    B: "kube-proxy encrypts Service traffic between nodes by default"
+    C: "kube-proxy authorizes each connection with a SubjectAccessReview"
+    D: "kube-proxy implements Services; the network plugin enforces policy"
+  answer: D
+  explanation: >
+    kube-proxy programs rules that route Service virtual IPs to backend Pods. It does not
+    enforce NetworkPolicy, encrypt traffic or authorize connections. NetworkPolicy only
+    works if the cluster's network plugin implements it.
+  references:
+    - https://kubernetes.io/docs/reference/networking/virtual-ips/
+    - https://kubernetes.io/docs/concepts/services-networking/network-policies/
+
+- id: kcsa-cc-015
+  domain: cluster-component-security
+  topic: kube-proxy
+  difficulty: easy
+  question: >
+    kube-proxy holds credentials for the API server, so its placement matters. Where does
+    it normally run?
+  options:
+    A: "On every node, usually as a DaemonSet"
+    B: "Only on control plane nodes, as a static Pod"
+    C: "Inside each application Pod, as a sidecar"
+    D: "Inside the kube-apiserver process itself"
+  answer: A
+  explanation: >
+    kube-proxy runs on each node to program that node's Service rules, typically as a
+    DaemonSet. Its kubeconfig grants it API access on every node, so its ServiceAccount
+    permissions should stay limited to what it needs.
+  references:
+    - https://kubernetes.io/docs/reference/command-line-tools-reference/kube-proxy/
+    - https://kubernetes.io/docs/concepts/architecture/
+
+# ---------------------------------------------------------------- pod (2)
+
+- id: kcsa-cc-016
+  domain: cluster-component-security
+  topic: pod
+  difficulty: easy
+  question: >
+    Which Pod field stops the ServiceAccount token from being mounted into a Pod whose
+    containers never call the Kubernetes API?
+  options:
+    A: "serviceAccountName: none"
+    B: "enableServiceLinks: false"
+    C: "automountServiceAccountToken: false"
+    D: "shareProcessNamespace: false"
+  answer: C
+  explanation: >
+    automountServiceAccountToken: false (on the Pod or the ServiceAccount) prevents the
+    API credential from being placed in the container, so a compromised app has no token
+    to steal. enableServiceLinks controls Service environment variables.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+
+- id: kcsa-cc-017
+  domain: cluster-component-security
+  topic: pod
+  difficulty: medium
+  question: >
+    Which securityContext field stops an attacker from writing new binaries into a
+    container's filesystem image?
+  options:
+    A: "runAsNonRoot: true"
+    B: "allowPrivilegeEscalation: false"
+    C: "readOnlyRootFilesystem: true"
+    D: "privileged: false"
+  answer: C
+  explanation: >
+    readOnlyRootFilesystem mounts the container's root filesystem read-only. The app can
+    still write to explicitly mounted volumes such as an emptyDir. The other fields limit
+    the user and privileges, not writes to the filesystem.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+
+# ---------------------------------------------------------------- etcd (3)
+
+- id: kcsa-cc-018
+  domain: cluster-component-security
+  topic: etcd
+  difficulty: easy
+  question: Why must direct access to etcd be tightly restricted?
+  options:
+    A: "etcd stores all Pod logs, which may contain passwords and tokens"
+    B: "etcd makes the scheduler's placement decisions"
+    C: "etcd holds the container images for every node"
+    D: "Write access to etcd is equivalent to cluster root"
+  answer: D
+  explanation: >
+    etcd stores all cluster state, including Secrets and RBAC objects. Anyone who can
+    write to it can change anything without going through API server authorization or
+    admission, so the Kubernetes docs treat it as root access to the cluster.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
+
+- id: kcsa-cc-019
+  domain: cluster-component-security
+  topic: etcd
+  difficulty: medium
+  question: Which configuration best secures communication with etcd?
+  options:
+    A: "Mutual TLS for client and peer traffic; only the API server as client"
+    B: "Plain HTTP on port 2379 behind a firewall, with password auth"
+    C: "An etcd member on every worker node for redundancy and speed"
+    D: "Exposing etcd through a NodePort Service for easier backups"
+  answer: A
+  explanation: >
+    etcd should use TLS with client certificate authentication for both client (2379)
+    and peer (2380) traffic, and only the kube-apiserver should hold a client certificate.
+    Spreading etcd to workers or exposing it as a Service widens access.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
+    - https://etcd.io/docs/v3.5/op-guide/security/
+
+- id: kcsa-cc-020
+  domain: cluster-component-security
+  topic: etcd
+  difficulty: hard
+  question: >
+    An attacker downloads an etcd snapshot from a misconfigured backup bucket. The
+    cluster's EncryptionConfiguration uses only the identity provider. What can the
+    attacker recover?
+  options:
+    A: "Nothing, because etcd snapshots are always encrypted"
+    B: "Every Secret's value, since they are stored unencrypted"
+    C: "Only Secret names, because values are stored as hashes"
+    D: "Only the Secrets that live in the kube-system namespace"
+  answer: B
+  explanation: >
+    The identity provider writes resources as-is, so Secret values are only base64
+    encoded in the API representation and readable in the snapshot. Use an encrypting
+    provider (the docs recommend kms v2 with an external key store), and protect backups
+    as carefully as etcd itself.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
+    - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
+
+# ---------------------------------------------------------------- container-networking (2)
+
+- id: kcsa-cc-021
+  domain: cluster-component-security
+  topic: container-networking
+  difficulty: easy
+  question: With no NetworkPolicy in place, which Pods can a given Pod connect to?
+  options:
+    A: "Any Pod in any namespace of the cluster"
+    B: "Only Pods in its own namespace"
+    C: "Only Pods on the same node"
+    D: "Only Pods that are selected by a Service in the namespace"
+  answer: A
+  explanation: >
+    The Kubernetes network model gives every Pod an IP reachable from every other Pod.
+    Pods are non-isolated until a NetworkPolicy selects them, so segmentation must be
+    added explicitly.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/network-policies/
+
+- id: kcsa-cc-022
+  domain: cluster-component-security
+  topic: container-networking
+  difficulty: medium
+  question: >
+    Pod-to-Pod traffic between nodes crosses a shared data center network. Which option
+    encrypts it without changing the applications?
+  options:
+    A: "A NetworkPolicy with policyTypes set to Ingress and Egress"
+    B: "Running kube-proxy in IPVS mode on every node"
+    C: "A ClusterIP Service in front of each workload"
+    D: "Node-to-node WireGuard or IPsec in the CNI plugin"
+  answer: D
+  explanation: >
+    Several CNI plugins, such as Cilium and Calico, can transparently encrypt traffic
+    between nodes with WireGuard or IPsec. NetworkPolicy only allows or denies traffic,
+    and kube-proxy and Services route traffic without encrypting it.
+  references:
+    - https://docs.cilium.io/en/stable/security/network/encryption/
+    - https://docs.tigera.io/calico/latest/network-policy/encrypt-cluster-pod-traffic
+
+# ---------------------------------------------------------------- client-security (2)
+
+- id: kcsa-cc-023
+  domain: cluster-component-security
+  topic: client-security
+  difficulty: medium
+  question: >
+    Why are exec credential plugins in a kubeconfig preferred over long-lived static
+    tokens?
+  options:
+    A: "They let kubectl skip TLS verification safely"
+    B: "They fetch short-lived credentials on demand"
+    C: "They keep the token in etcd for central audit"
+    D: "They grant cluster-admin only during a command"
+  answer: B
+  explanation: >
+    An exec plugin runs a helper (for example a cloud CLI or an OIDC login tool) that
+    returns a fresh, short-lived credential. Nothing long-lived sits in the kubeconfig,
+    and access ends when the identity provider revokes the user.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/authentication/#client-go-credential-plugins
+
+- id: kcsa-cc-024
+  domain: cluster-component-security
+  topic: client-security
+  difficulty: easy
+  question: >
+    A kubeconfig file embeds a client certificate and private key for an admin user. How
+    should it be handled?
+  options:
+    A: "As public data, since the API server validates it"
+    B: "As safe to share once the cluster CA is rotated"
+    C: "Like a password: restrict access and never commit it"
+    D: "As config only, since it grants no access on its own"
+  answer: C
+  explanation: >
+    The embedded certificate and key are the user's credential: anyone holding the file
+    can act as that user until the certificate expires, and client certificates cannot be
+    revoked individually. Protect the file and prefer short-lived credentials.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/
+    - https://kubernetes.io/docs/concepts/security/hardening-guide/authentication-mechanisms/
+
+# ---------------------------------------------------------------- storage (2)
+
+- id: kcsa-cc-025
+  domain: cluster-component-security
+  topic: storage
+  difficulty: medium
+  question: Why does the Baseline Pod Security Standard forbid hostPath volumes?
+  options:
+    A: "They are much slower than emptyDir or configMap volumes"
+    B: "They cannot be used with StatefulSets"
+    C: "They bypass storage ResourceQuotas"
+    D: "They expose node files and can enable escape"
+  answer: D
+  explanation: >
+    A hostPath volume mounts a path from the node's filesystem into the container. It can
+    expose credentials, the container runtime socket or system files, and a writable
+    mount can be used to take over the node.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-standards/
+    - https://kubernetes.io/docs/concepts/storage/volumes/
+
+- id: kcsa-cc-026
+  domain: cluster-component-security
+  topic: storage
+  difficulty: medium
+  question: >
+    When a Secret is mounted into a Pod as a volume, where does the kubelet store its data
+    on the node?
+  options:
+    A: "In a plain directory on the node's root disk"
+    B: "On disk, encrypted with the etcd encryption key"
+    C: "In a tmpfs (memory-backed) filesystem"
+    D: "In the container image's writable layer"
+  answer: C
+  explanation: >
+    The kubelet keeps Secret volume data in tmpfs so it is not written to durable storage
+    on the node, and it removes the data when the Pod is deleted. A Secret is only sent to
+    nodes that run a Pod needing it.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/secret/

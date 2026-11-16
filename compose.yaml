@@ -1,0 +1,12 @@
+services:
+  kcx:
+    build: .
+    image: kcx:local
+    ports:
+      - "127.0.0.1:8080:8080"   # local only; the app has no auth
+    volumes:
+      - kcx-data:/data   # SQLite history survives restarts and rebuilds
+    restart: unless-stopped
+
+volumes:
+  kcx-data:

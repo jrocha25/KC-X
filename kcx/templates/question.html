@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Question {{ n }} of {{ rows|length }} &middot; KC-X{% endblock %}
+{% block content %}
+<div class="exam-bar">
+  <span>{{ cert.name if cert else attempt.cert|upper }} &middot; {% include "_mode.html" %} &middot; question <strong>{{ n }}</strong> of {{ rows|length }}</span>
+  {% with form_id = "qform" %}{% include "_timer.html" %}{% endwith %}
+</div>
+
+<form id="qform" method="post" action="{{ url_for('kcx.save_question', attempt_id=attempt.id, n=n) }}">
+  {# First submit button = the one used when Enter is pressed. Keep it "next", never "submit". #}
+  <button type="submit" name="go" value="next" class="visually-hidden" tabindex="-1" aria-hidden="true">Next</button>
+
+  {% if q %}
+  <p class="question">{{ q.question }}</p>
+  <fieldset class="options">
+    <legend class="visually-hidden">Answer</legend>
+    {% for key, text in options %}
+    <label class="option">
+      <input type="radio" name="choice" value="{{ key }}" {% if row.selected == key %}checked{% endif %}>
+      <span class="slot">{{ "ABCD"[loop.index0] }}.</span> {{ text }}
+    </label>
+    {% endfor %}
+  </fieldset>
+  {% else %}
+  <p class="removed">This question ({{ row.question_id }}) was removed from the question bank. It will be scored as wrong.</p>
+  {% endif %}
+
+  <label class="flag"><input type="checkbox" name="flag" value="1" {% if row.flagged %}checked{% endif %}> Flag for review</label>
+
+  <div class="nav">
+    <button type="submit" name="go" value="prev" {% if n == 1 %}disabled{% endif %}>&larr; Prev</button>
+    <button type="submit" name="go" value="next">{% if n == rows|length %}Review{% else %}Next &rarr;{% endif %}</button>
+    <button type="submit" name="go" value="review" class="secondary">Review &amp; submit</button>
+  </div>
+
+  <nav class="grid" aria-label="Questions">
+    {% for r in rows %}
+    <button type="submit" name="go" value="{{ r.position }}"
+      class="cell {% if r.selected %}answered{% endif %} {% if r.flagged %}flagged{% endif %} {% if r.position == n %}current{% endif %}"
+      title="Question {{ r.position }}{% if r.selected %}, answered{% endif %}{% if r.flagged %}, flagged{% endif %}">{{ r.position }}</button>
+    {% endfor %}
+  </nav>
+  <p class="legend muted"><span class="cell answered">1</span> answered <span class="cell">2</span> unanswered <span class="cell flagged">3</span> flagged</p>
+</form>
+{% endblock %}
+{% block scripts %}{% if remaining is not none %}<script src="{{ url_for('static', filename='timer.js') }}"></script>{% endif %}{% endblock %}

@@ -1,0 +1,5 @@
+{# Timer for timed attempts. Server-rendered remaining time; static/timer.js counts it down
+   and, at 0:00, submits the form whose id is `form_id` with go=submit. #}
+{% if remaining is not none %}
+<p class="timer">Time left: <strong id="timer" data-remaining="{{ remaining }}" data-form="{{ form_id }}">{{ remaining|clock }}</strong></p>
+{% endif %}

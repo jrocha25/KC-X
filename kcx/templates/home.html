@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Certifications</h1>
+{% for c in certs %}
+<section class="cert">
+  <h2>{{ c.cert.name }}</h2>
+  <p>{{ c.cert.question_count }} questions &middot; {{ c.cert.duration_min }} min &middot; pass at {{ c.cert.pass_pct }}%
+     &middot; bank: <strong>{{ c.count }}</strong> questions
+     &middot; {% if c.ready %}<span class="ok">ready</span>{% else %}<span class="muted">coming soon</span>{% endif %}</p>
+  <table>
+    <tr><th>Domain</th><th>Weight</th><th>Per exam</th><th>In bank</th></tr>
+    {% for d in c.cert.domains %}
+    <tr><td>{{ d.name }}</td><td>{{ d.weight }}%</td><td>{{ c.per_exam[d.id] }}</td><td>{{ c.have[d.id] }}</td></tr>
+    {% endfor %}
+  </table>
+  {% if c.ready %}
+  <form method="post" action="{{ url_for('kcx.start_exam', cert_id=c.cert.id) }}" class="nav">
+    <button type="submit">Start full exam ({{ c.cert.question_count }} questions, {{ c.cert.duration_min }} min)</button>
+  </form>
+  {% endif %}
+  {% if c.drill_domains %}
+  <form method="post" action="{{ url_for('kcx.start_drill', cert_id=c.cert.id) }}" class="nav drill">
+    <label>Domain drill:
+      <select name="domain">
+        {% for d in c.drill_domains %}<option value="{{ d.id }}">{{ d.name }} ({{ c.have[d.id] }})</option>{% endfor %}
+      </select>
+    </label>
+    <span role="radiogroup" aria-label="Drill size">
+      <label><input type="radio" name="size" value="10" checked> 10</label>
+      <label><input type="radio" name="size" value="20"> 20</label>
+      <label><input type="radio" name="size" value="all"> all</label>
+    </span>
+    <button type="submit">Start drill (untimed)</button>
+  </form>
+  {% endif %}
+  {% if c.mistakes %}
+  <form method="post" action="{{ url_for('kcx.start_mistakes', cert_id=c.cert.id) }}" class="nav">
+    <button type="submit">Review mistakes ({{ c.mistakes }})</button>
+    <span class="muted">questions whose latest submitted answer was wrong or blank</span>
+  </form>
+  {% endif %}
+</section>
+{% endfor %}
+
+<h1>History</h1>
+{% if attempts %}
+<table class="history">
+  <tr><th>Date</th><th>Cert</th><th>Mode</th><th>Score</th><th>Result</th><th></th></tr>
+  {% for a in attempts %}
+  <tr>
+    <td>{{ a.started_at|when }}</td>
+    <td>{{ a.cert|upper }}</td>
+    <td>{{ a.mode }}{% if a.domain %} ({{ a.domain }}){% endif %}</td>
+    {% if a.submitted_at %}
+    <td>{{ "%.1f"|format(a.score_pct) }}%</td>
+    <td>{% if a.passed %}<span class="ok">PASS</span>{% else %}<span class="fail">FAIL</span>{% endif %}</td>
+    <td><a href="{{ url_for('kcx.result', attempt_id=a.id) }}">View result</a></td>
+    {% else %}
+    <td class="muted">&ndash;</td>
+    <td class="muted">in progress</td>
+    <td><a href="{{ url_for('kcx.question', attempt_id=a.id, n=1) }}">Resume</a></td>
+    {% endif %}
+  </tr>
+  {% endfor %}
+</table>
+<p><a href="{{ url_for('kcx.confirm_clear') }}">Clear history&hellip;</a></p>
+{% else %}
+<p class="muted">No attempts yet.</p>
+{% endif %}
+{% endblock %}

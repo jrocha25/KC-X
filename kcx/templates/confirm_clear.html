@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Clear history &middot; KC-X{% endblock %}
+{% block content %}
+<h1>Clear history?</h1>
+<p>This permanently deletes all {{ count }} attempt{{ "" if count == 1 else "s" }}, including any exam in progress, and empties the mistakes pool.</p>
+<form method="post" action="{{ url_for('kcx.clear_history') }}" class="nav">
+  <a href="{{ url_for('kcx.home') }}">Cancel</a>
+  <button type="submit" class="danger">Yes, delete everything</button>
+</form>
+{% endblock %}

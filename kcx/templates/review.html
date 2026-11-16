@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Review &middot; KC-X{% endblock %}
+{% block content %}
+<div class="exam-bar">
+  <span>{{ cert.name if cert else attempt.cert|upper }} &middot; {% include "_mode.html" %} &middot; review before submitting</span>
+  {% with form_id = "submit-form" %}{% include "_timer.html" %}{% endwith %}
+</div>
+
+<h1>Review</h1>
+<p>{{ rows|length - unanswered|length }} of {{ rows|length }} answered &middot; {{ flagged|length }} flagged.</p>
+
+<h2>Unanswered ({{ unanswered|length }})</h2>
+{% if unanswered %}
+<p class="jump">{% for r in unanswered %}<a href="{{ url_for('kcx.question', attempt_id=attempt.id, n=r.position) }}">{{ r.position }}</a> {% endfor %}</p>
+{% else %}<p class="muted">None.</p>{% endif %}
+
+<h2>Flagged ({{ flagged|length }})</h2>
+{% if flagged %}
+<p class="jump">{% for r in flagged %}<a href="{{ url_for('kcx.question', attempt_id=attempt.id, n=r.position) }}">{{ r.position }}</a> {% endfor %}</p>
+{% else %}<p class="muted">None.</p>{% endif %}
+
+<form id="submit-form" method="post" action="{{ url_for('kcx.submit', attempt_id=attempt.id) }}" class="nav">
+  <a href="{{ url_for('kcx.question', attempt_id=attempt.id, n=1) }}">&larr; Back to questions</a>
+  <button type="submit">Submit</button>
+</form>
+{% if unanswered %}<p class="muted">Unanswered questions count as wrong.</p>{% endif %}
+{% endblock %}
+{% block scripts %}{% if remaining is not none %}<script src="{{ url_for('static', filename='timer.js') }}"></script>{% endif %}{% endblock %}

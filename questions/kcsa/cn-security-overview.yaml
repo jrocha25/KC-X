@@ -1,0 +1,346 @@
+# KCSA — Overview of Cloud Native Security (14%) — 16 questions
+# Topics: four-cs 3 · cloud-provider-infra 2 · controls-frameworks 2 · isolation-techniques 3
+#         artifact-image-security 3 · workload-code-security 3
+# Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
+
+# ---------------------------------------------------------------- four-cs (3)
+
+- id: kcsa-ov-001
+  domain: cn-security-overview
+  topic: four-cs
+  difficulty: easy
+  question: In the 4C model of cloud native security, which layer is the innermost one?
+  options:
+    A: Code
+    B: Cloud
+    C: Cluster
+    D: Container
+  answer: A
+  explanation: >
+    The 4C model nests Cloud, Cluster, Container and Code. Code is the innermost layer:
+    it is the part an application team controls most directly, but it can only be as
+    secure as the layers around it.
+  references:
+    - https://github.com/kubernetes/website/blob/release-1.28/content/en/docs/concepts/security/overview.md
+
+- id: kcsa-ov-002
+  domain: cn-security-overview
+  topic: four-cs
+  difficulty: medium
+  question: >
+    According to the 4C model, why can a poorly secured Cloud layer undermine strong
+    controls in the Cluster, Container and Code layers?
+  options:
+    A: "The Cloud layer stores every container image the cluster runs"
+    B: "Only the Cloud layer can enforce Pod Security Standards"
+    C: "Each inner layer depends on the security of the layers around it"
+    D: "Code-level controls are switched off when the cloud is misconfigured"
+  answer: C
+  explanation: >
+    The layers are nested: each one builds on the one outside it. If the infrastructure
+    is compromised (for example, an attacker controls the VMs or the cloud account),
+    controls inside the cluster or the application can be bypassed. The infrastructure
+    must provide the guarantees that higher layers rely on.
+  references:
+    - https://github.com/kubernetes/website/blob/release-1.28/content/en/docs/concepts/security/overview.md
+    - https://kubernetes.io/docs/concepts/security/cloud-native-security/
+
+- id: kcsa-ov-003
+  domain: cn-security-overview
+  topic: four-cs
+  difficulty: medium
+  question: >
+    A team runs static analysis on every commit, scans third-party libraries for known
+    vulnerabilities and uses TLS for calls between its own services. Which 4C layer do
+    these controls mainly address?
+  options:
+    A: Cloud
+    B: Code
+    C: Cluster
+    D: Container
+  answer: B
+  explanation: >
+    Static analysis, dependency scanning and encrypting the application's own traffic are
+    all controls on the application code itself. Cloud covers the infrastructure, Cluster
+    covers Kubernetes components and API access, and Container covers images and runtimes.
+  references:
+    - https://github.com/kubernetes/website/blob/release-1.28/content/en/docs/concepts/security/overview.md
+
+# ---------------------------------------------------------------- cloud-provider-infra (2)
+
+- id: kcsa-ov-004
+  domain: cn-security-overview
+  topic: cloud-provider-infra
+  difficulty: easy
+  question: >
+    Under the shared responsibility model of a managed Kubernetes service, who is normally
+    responsible for the RBAC rules and the workloads deployed in the cluster?
+  options:
+    A: "The cloud provider"
+    B: "The CNCF"
+    C: "The upstream Kubernetes project"
+    D: "The customer"
+  answer: D
+  explanation: >
+    With managed Kubernetes the provider typically secures the underlying infrastructure
+    and often the control plane, while the customer remains responsible for what they
+    configure and run: access control, workload settings, images and data.
+  references:
+    - https://aws.amazon.com/compliance/shared-responsibility-model/
+    - https://learn.microsoft.com/en-us/azure/security/fundamentals/shared-responsibility
+
+- id: kcsa-ov-005
+  domain: cn-security-overview
+  topic: cloud-provider-infra
+  difficulty: medium
+  question: >
+    A Pod can reach the cloud instance metadata endpoint (169.254.169.254) and read the
+    node's cloud credentials. Which control most directly prevents this?
+  options:
+    A: "Setting imagePullPolicy: Always on every container"
+    B: "Blocking Pod egress to the metadata endpoint"
+    C: "Enabling audit logging at the Metadata level"
+    D: "Running kube-proxy in IPVS mode"
+  answer: B
+  explanation: >
+    Cloud metadata services can expose credentials and node configuration. Kubernetes
+    recommends restricting Pod access to them, for example with a NetworkPolicy that
+    denies egress to the metadata IP or with the provider's own metadata protection.
+    Audit logging records API calls; it does not block network traffic.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/securing-a-cluster/
+    - https://kubernetes.io/docs/concepts/services-networking/network-policies/
+
+# ---------------------------------------------------------------- controls-frameworks (2)
+
+- id: kcsa-ov-006
+  domain: cn-security-overview
+  topic: controls-frameworks
+  difficulty: easy
+  question: What does "defense in depth" mean in cloud native security?
+  options:
+    A: "Layering independent controls so that one failure is not fatal"
+    B: "Relying on one strong perimeter firewall around the cluster"
+    C: "Encrypting data only at the lowest storage layer of the whole stack"
+    D: "Running the most sensitive workloads on a separate node pool"
+  answer: A
+  explanation: >
+    Defense in depth combines several controls at different layers (infrastructure,
+    cluster, workload, code) so that if one is bypassed, others still limit the damage.
+    A single perimeter or a single isolated node pool is one control, not depth.
+  references:
+    - https://kubernetes.io/docs/concepts/security/cloud-native-security/
+    - https://github.com/cncf/tag-security/tree/main/community/resources/security-whitepaper
+
+- id: kcsa-ov-007
+  domain: cn-security-overview
+  topic: controls-frameworks
+  difficulty: medium
+  question: >
+    Pod Security Admission in enforce mode, and a runtime rule that raises an alert when a
+    shell starts inside a container, are examples of which two kinds of control?
+  options:
+    A: "A corrective control and a detective control"
+    B: "A compensating control and a corrective control"
+    C: "A deterrent control and a recovery control"
+    D: "A preventive control and a detective control"
+  answer: D
+  explanation: >
+    Enforce mode blocks a non-compliant Pod before it is created, so it is preventive.
+    A runtime rule (for example in Falco) observes behaviour and raises an alert after the event happens, so it is
+    detective. Good security programs combine both.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-admission/
+    - https://falco.org/about/
+
+# ---------------------------------------------------------------- isolation-techniques (3)
+
+- id: kcsa-ov-008
+  domain: cn-security-overview
+  topic: isolation-techniques
+  difficulty: easy
+  question: >
+    Which Kubernetes object is the basic unit for separating teams' resources, RBAC
+    permissions and quotas within a single cluster?
+  options:
+    A: Node
+    B: Label
+    C: Namespace
+    D: ReplicaSet
+  answer: C
+  explanation: >
+    Namespaces scope names, Roles and RoleBindings, ResourceQuotas and many policies.
+    They are the foundation of multi-tenancy in a shared cluster, though on their own
+    they do not isolate the network or the kernel.
+  references:
+    - https://kubernetes.io/docs/concepts/security/multi-tenancy/
+
+- id: kcsa-ov-009
+  domain: cn-security-overview
+  topic: isolation-techniques
+  difficulty: medium
+  question: >
+    A cluster must run untrusted code supplied by customers. Which option adds a stronger
+    isolation boundary than a standard runc container?
+  options:
+    A: "A separate namespace with its own ResourceQuota"
+    B: "A higher PriorityClass for the untrusted Pods"
+    C: "A RuntimeClass that selects gVisor or Kata Containers"
+    D: "A dedicated headless ClusterIP Service for the untrusted Pods"
+  answer: C
+  explanation: >
+    A RuntimeClass can select a sandboxed runtime. gVisor intercepts system calls in a
+    user-space kernel and Kata Containers runs each Pod in a lightweight VM, so a kernel
+    exploit in the container does not reach the host kernel directly. Namespaces, quotas
+    and Services do not change kernel isolation.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/runtime-class/
+    - https://kubernetes.io/docs/concepts/security/multi-tenancy/
+    - https://gvisor.dev/docs/
+
+- id: kcsa-ov-010
+  domain: cn-security-overview
+  topic: isolation-techniques
+  difficulty: hard
+  question: >
+    An auditor says two containers on the same node are less isolated from each other
+    than two virtual machines on the same hypervisor. What is the main reason?
+  options:
+    A: "Containers on one node must all share a single network namespace and IP"
+    B: "They share the host kernel, so one kernel exploit can reach both"
+    C: "Containers cannot be limited by cgroups for CPU and memory"
+    D: "containerd always runs every container as root on the host"
+  answer: B
+  explanation: >
+    Containers are isolated with Linux namespaces, cgroups and security modules, but they
+    all use the node's kernel. A kernel vulnerability can therefore break out of any
+    container on that node. VMs each have their own kernel behind a hypervisor. Pods get
+    separate network namespaces, and cgroups do limit resources.
+  references:
+    - https://kubernetes.io/docs/concepts/security/linux-kernel-security-constraints/
+    - https://kubernetes.io/docs/concepts/security/multi-tenancy/
+
+# ---------------------------------------------------------------- artifact-image-security (3)
+
+- id: kcsa-ov-011
+  domain: cn-security-overview
+  topic: artifact-image-security
+  difficulty: easy
+  question: >
+    Why should a Pod spec reference an image by digest (image@sha256:...) instead of only
+    by tag?
+  options:
+    A: "A digest is immutable, so the same content is always pulled"
+    B: "Pulling by digest is faster than pulling by tag"
+    C: "Tags cannot be used with private registries"
+    D: "A digest encrypts the image while it is stored"
+  answer: A
+  explanation: >
+    A tag such as v1.2 or latest can be moved to point at different content. A digest is
+    a hash of the image manifest, so the reference always resolves to exactly the same
+    image, which prevents silent substitution.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/images/
+
+- id: kcsa-ov-012
+  domain: cn-security-overview
+  topic: artifact-image-security
+  difficulty: medium
+  question: Which practice most reduces the attack surface of a container image?
+  options:
+    A: "Keeping a shell and a package manager in it for live debugging"
+    B: "Using the latest tag so updates arrive automatically"
+    C: "Leaving build tools in the final image for hot fixes"
+    D: "Using a minimal or distroless base with runtime deps only"
+  answer: D
+  explanation: >
+    Every extra package is something that can be vulnerable or useful to an attacker.
+    Minimal or distroless bases and multi-stage builds ship only what the app needs to
+    run. Shells, package managers and compilers help an attacker after a compromise.
+  references:
+    - https://github.com/GoogleContainerTools/distroless
+    - https://docs.docker.com/build/building/best-practices/
+
+- id: kcsa-ov-013
+  domain: cn-security-overview
+  topic: artifact-image-security
+  difficulty: medium
+  question: >
+    Where in the lifecycle is it cheapest and most effective to catch a critical CVE in
+    a library that an image includes?
+  options:
+    A: "At runtime, once the Pod shows signs of compromise"
+    B: "When nodes are provisioned, by scanning the node OS"
+    C: "When the API server stores the Deployment in etcd"
+    D: "In CI, by scanning the image before it is pushed"
+  answer: D
+  explanation: >
+    Scanning images in the build and distribute phases ("shift left") stops vulnerable
+    artifacts before they reach a registry or a cluster. Node OS scans do not inspect
+    image contents, and the API server does not scan images.
+  references:
+    - https://kubernetes.io/docs/concepts/security/cloud-native-security/
+    - https://github.com/aquasecurity/trivy
+
+# ---------------------------------------------------------------- workload-code-security (3)
+
+- id: kcsa-ov-014
+  domain: cn-security-overview
+  topic: workload-code-security
+  difficulty: easy
+  question: Where should an application running in Kubernetes get its database password?
+  options:
+    A: "From a Secret, mounted as a file or set as an env var"
+    B: "From a ConfigMap that is committed to the Git repository"
+    C: "Hardcoded into the container image at build time"
+    D: "From an annotation on the application's Deployment"
+  answer: A
+  explanation: >
+    Secrets are the Kubernetes object for confidential data and can be protected with
+    RBAC and encryption at rest. ConfigMaps, annotations and image layers are not meant
+    for confidential values and are easy to read or leak.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/secret/
+    - https://kubernetes.io/docs/concepts/security/secrets-good-practices/
+
+- id: kcsa-ov-015
+  domain: cn-security-overview
+  topic: workload-code-security
+  difficulty: hard
+  question: >
+    A web application in a Pod has a server-side request forgery (SSRF) bug that lets an
+    attacker make it send requests to any address. Which Kubernetes control best limits
+    what the attacker can reach?
+  options:
+    A: "A liveness probe that restarts the container more often"
+    B: "An egress NetworkPolicy allowing only required destinations"
+    C: "A PodDisruptionBudget that keeps two replicas running"
+    D: "An imagePullPolicy of Always set on the application's container"
+  answer: B
+  explanation: >
+    With SSRF the attacker abuses the Pod's own network access. Restricting egress to
+    the destinations the app really needs keeps it from reaching internal services, the
+    API server or cloud metadata endpoints. The code bug still needs fixing; this limits
+    the blast radius.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/network-policies/
+    - https://owasp.org/www-project-top-ten/
+
+- id: kcsa-ov-016
+  domain: cn-security-overview
+  topic: workload-code-security
+  difficulty: medium
+  question: Which activity is an example of static application security testing (SAST)?
+  options:
+    A: "Probing a running service with crafted, malicious HTTP requests"
+    B: "Watching a running container's syscalls with Falco"
+    C: "Analysing source code for injection flaws before building"
+    D: "Scanning a built image for vulnerable OS packages"
+  answer: C
+  explanation: >
+    SAST analyses source code without running it. Probing a running service is dynamic
+    testing (DAST), syscall monitoring is runtime detection, and image scanning looks for
+    known vulnerabilities in packages rather than flaws in your own code.
+  references:
+    - https://github.com/cncf/tag-security/tree/main/community/resources/security-whitepaper
+    - https://kubernetes.io/docs/concepts/security/cloud-native-security/

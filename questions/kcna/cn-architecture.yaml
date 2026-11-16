@@ -1,0 +1,278 @@
+# KCNA — Cloud Native Architecture (12%) — 14 questions
+# Topics: observability 6 · ecosystem-principles 5 · community-collaboration 3
+# Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
+
+# ---------------------------------------------------------------- observability (6)
+
+- id: kcna-ca-001
+  domain: cn-architecture
+  topic: observability
+  difficulty: easy
+  question: Which three telemetry signals are commonly called the pillars of observability?
+  options:
+    A: CPU, memory and disk
+    B: Alerts, dashboards and runbooks
+    C: Metrics, logs and traces
+    D: Pods, Services and Ingresses
+  answer: C
+  explanation: >
+    Metrics are numeric measurements over time, logs are timestamped event records, and
+    traces follow a single request across services. Together they help explain what a
+    system is doing and why.
+  references:
+    - https://glossary.cncf.io/observability/
+    - https://opentelemetry.io/docs/concepts/signals/
+
+- id: kcna-ca-002
+  domain: cn-architecture
+  topic: observability
+  difficulty: hard
+  question: >
+    Prometheus normally collects metrics by scraping HTTP endpoints. A short-lived batch
+    job finishes before Prometheus can scrape it. What is the documented way to capture
+    its metrics?
+  options:
+    A: "Push its metrics to a Pushgateway that Prometheus scrapes"
+    B: "Configure Prometheus to parse the job's log files after it exits"
+    C: "Lower the scrape interval to one second so the job is always caught"
+    D: "Write the metrics to a ConfigMap that Prometheus reads on startup"
+  answer: A
+  explanation: >
+    Prometheus uses a pull model. For service-level batch jobs that may not live long
+    enough to be scraped, the Pushgateway acts as an intermediary - the job pushes, and
+    Prometheus scrapes the gateway. It is not meant to turn Prometheus into a push system
+    in general.
+  references:
+    - https://prometheus.io/docs/practices/pushing/
+    - https://prometheus.io/docs/introduction/overview/
+
+- id: kcna-ca-003
+  domain: cn-architecture
+  topic: observability
+  difficulty: easy
+  question: What is OpenTelemetry?
+  options:
+    A: "A Kubernetes-native database for long-term storage of logs, metrics and traces"
+    B: "A vendor-neutral set of APIs, SDKs and a Collector for telemetry data"
+    C: "A dashboarding and alerting tool designed to replace Grafana"
+    D: "A commercial APM product sold and supported by the CNCF itself"
+  answer: B
+  explanation: >
+    OpenTelemetry (OTel) is a CNCF project that standardizes how telemetry is produced and
+    shipped. It is not a backend - data is exported to tools such as Prometheus, Jaeger or
+    commercial vendors.
+  references:
+    - https://opentelemetry.io/docs/what-is-opentelemetry/
+
+- id: kcna-ca-004
+  domain: cn-architecture
+  topic: observability
+  difficulty: medium
+  question: >
+    A checkout request passes through six microservices and is sometimes slow. Which
+    technique shows how long each service spent on that specific request?
+  options:
+    A: "Centralized logging with all service logs in one place"
+    B: "Node-level CPU and memory metrics for each worker"
+    C: "Liveness probes with shorter timeouts on every service"
+    D: "Distributed tracing, with one span per service"
+  answer: D
+  explanation: >
+    A trace represents one request's path through the system; each span records an
+    operation's timing and metadata. Tools such as Jaeger visualize traces to pinpoint
+    latency.
+  references:
+    - https://opentelemetry.io/docs/concepts/signals/traces/
+    - https://www.jaegertracing.io/docs/
+
+- id: kcna-ca-005
+  domain: cn-architecture
+  topic: observability
+  difficulty: medium
+  question: >
+    Which Prometheus metric type represents a value that only goes up (or resets to zero on
+    restart), such as the total number of HTTP requests served?
+  options:
+    A: Counter
+    B: Gauge
+    C: Histogram
+    D: Summary
+  answer: A
+  explanation: >
+    A counter is cumulative and monotonically increasing; you usually query it with rate()
+    to get a per-second rate. A gauge can go up and down (e.g. memory in use); histograms
+    and summaries sample observations such as request durations.
+  references:
+    - https://prometheus.io/docs/concepts/metric_types/
+
+- id: kcna-ca-006
+  domain: cn-architecture
+  topic: observability
+  difficulty: hard
+  question: >
+    A service has an availability SLO of 99.9% measured over 30 days. Roughly how much
+    downtime does its error budget allow in that window?
+  options:
+    A: "About 4.3 minutes"
+    B: About 7 hours
+    C: About 43 minutes
+    D: About 3 days
+  answer: C
+  explanation: >
+    30 days is 43,200 minutes; 0.1% of that is about 43 minutes. The SLI is the measured
+    indicator (e.g. successful request ratio), the SLO is the target, and the error budget
+    is the allowed shortfall (100% - SLO).
+  references:
+    - https://sre.google/sre-book/service-level-objectives/
+
+# --------------------------------------------------------- ecosystem-principles (5)
+
+- id: kcna-ca-007
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: easy
+  question: According to the CNCF cloud native definition, which approaches exemplify cloud native?
+  options:
+    A: "Containers, service meshes, microservices and declarative APIs"
+    B: "Virtual machines managed by hand with long-lived configuration changes"
+    C: "Shared databases with tightly coupled services released together"
+    D: "A single large application deployed as one unit on dedicated servers"
+  answer: A
+  explanation: >
+    The CNCF definition says cloud native technologies let organizations build and run
+    scalable applications in modern, dynamic environments, exemplified by containers,
+    service meshes, microservices, immutable infrastructure and declarative APIs.
+  references:
+    - https://github.com/cncf/toc/blob/main/DEFINITION.md
+
+- id: kcna-ca-008
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: easy
+  question: What is a key advantage of a microservices architecture over a monolith?
+  options:
+    A: "It always uses less memory and CPU than a monolith"
+    B: "It reduces the amount of network communication between components"
+    C: "It makes data consistency across the system simpler to maintain"
+    D: Services can be developed, deployed and scaled independently
+  answer: D
+  explanation: >
+    Microservices split an application into small, loosely coupled services with their own
+    lifecycle, so teams can release and scale them independently. The trade-off is more
+    network communication and operational complexity.
+  references:
+    - https://glossary.cncf.io/microservices-architecture/
+
+- id: kcna-ca-009
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: medium
+  question: >
+    A team wants to run event-driven functions that scale to zero when idle and not manage
+    any servers. Which model fits, and which CNCF project supports it on Kubernetes?
+  options:
+    A: Infrastructure as a Service, with etcd
+    B: Serverless, with Knative
+    C: Batch computing, with CronJobs
+    D: Virtualization, with KubeVirt
+  answer: B
+  explanation: >
+    Serverless lets developers deploy code while the platform handles provisioning and
+    scaling, including scale-to-zero. Knative provides serverless serving and eventing on
+    top of Kubernetes.
+  references:
+    - https://glossary.cncf.io/serverless/
+    - https://knative.dev/docs/
+
+- id: kcna-ca-010
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: medium
+  question: What does the principle of immutable infrastructure mean?
+  options:
+    A: "Instances are never changed after deployment; they are replaced with new ones"
+    B: "Infrastructure, once created, can never be deleted or scaled down"
+    C: "All configuration is hard-coded into the application binary at build time"
+    D: "Servers are patched in place so instances never need to be replaced"
+  answer: A
+  explanation: >
+    With immutable infrastructure, a change means building a new image and replacing the
+    running instances. This avoids configuration drift and makes rollbacks predictable.
+  references:
+    - https://glossary.cncf.io/immutable-infrastructure/
+
+- id: kcna-ca-011
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: medium
+  question: >
+    A team wants mutual TLS between all services, retries and traffic splitting, and
+    per-request telemetry, without changing application code. What kind of tool provides
+    this?
+  options:
+    A: A container registry such as Harbor
+    B: "A CI/CD system such as Jenkins or Tekton"
+    C: A service mesh such as Istio or Linkerd
+    D: A package manager such as Helm
+  answer: C
+  explanation: >
+    A service mesh adds a dedicated infrastructure layer (sidecar or node-level proxies)
+    that handles service-to-service security, reliability and observability transparently
+    to the application.
+  references:
+    - https://glossary.cncf.io/service-mesh/
+
+# ---------------------------------------------------- community-collaboration (3)
+
+- id: kcna-ca-012
+  domain: cn-architecture
+  topic: community-collaboration
+  difficulty: easy
+  question: What are the three maturity levels for projects hosted by the CNCF?
+  options:
+    A: Alpha, Beta, Stable
+    B: Bronze, Silver, Gold
+    C: Experimental, Supported, Deprecated
+    D: Sandbox, Incubating, Graduated
+  answer: D
+  explanation: >
+    CNCF projects enter as Sandbox, move to Incubating, and then to Graduated as they show
+    adoption, healthy governance and security practices. Kubernetes, Prometheus and Envoy
+    are graduated projects. Alpha/Beta/Stable are Kubernetes feature stages.
+  references:
+    - https://www.cncf.io/projects/
+
+- id: kcna-ca-013
+  domain: cn-architecture
+  topic: community-collaboration
+  difficulty: easy
+  question: In the Kubernetes community, what is a SIG?
+  options:
+    A: "A Special Interest Group that owns an area such as networking"
+    B: A Security Incident Guide published after each release
+    C: "A Software Integration Gateway that connects clusters together"
+    D: "A Steering Interest Group elected to approve every pull request"
+  answer: A
+  explanation: >
+    Kubernetes is organized into Special Interest Groups (SIG Network, SIG Storage, SIG
+    Node, ...) that hold open meetings and own parts of the codebase. Anyone can join.
+  references:
+    - https://github.com/kubernetes/community/blob/master/sig-list.md
+
+- id: kcna-ca-014
+  domain: cn-architecture
+  topic: community-collaboration
+  difficulty: medium
+  question: How are significant new features or changes to Kubernetes formally proposed and tracked?
+  options:
+    A: "Through feature requests filed with cloud vendors"
+    B: Through Kubernetes Enhancement Proposals (KEPs)
+    C: "Through GitHub issues voted on by the community"
+    D: "Through decisions in private CNCF Governing Board meetings"
+  answer: B
+  explanation: >
+    A KEP describes the motivation, design, graduation criteria and production readiness
+    of an enhancement. KEPs are reviewed in the open by the owning SIGs and tracked per
+    release in the kubernetes/enhancements repository.
+  references:
+    - https://github.com/kubernetes/enhancements

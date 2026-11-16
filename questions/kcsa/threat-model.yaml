@@ -1,0 +1,425 @@
+# KCSA — Kubernetes Threat Model (16%) — 20 questions
+# Topics: trust-boundaries 3 · persistence 3 · denial-of-service 3 · malicious-code 3
+#         network-attacker 2 · sensitive-data 3 · privilege-escalation 3
+# Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
+
+# ---------------------------------------------------------------- trust-boundaries (3)
+
+- id: kcsa-tm-001
+  domain: threat-model
+  topic: trust-boundaries
+  difficulty: easy
+  question: Which of these is an important trust boundary in a Kubernetes cluster?
+  options:
+    A: "Between two replicas of the same Deployment"
+    B: "Between a container and the node it runs on"
+    C: "Between a Service and its EndpointSlices"
+    D: "Between a Pod and the labels attached to it"
+  answer: B
+  explanation: >
+    A container should not be able to affect its node: crossing that boundary (a
+    container escape) gives access to the kubelet's credentials and every other Pod on
+    the node. Other key boundaries include node to control plane and namespace to
+    namespace.
+  references:
+    - https://kubernetes.io/docs/concepts/security/linux-kernel-security-constraints/
+    - https://kubernetes.io/docs/concepts/security/multi-tenancy/
+
+- id: kcsa-tm-002
+  domain: threat-model
+  topic: trust-boundaries
+  difficulty: easy
+  question: >
+    Which component should be the single entry point through which users and other
+    components read and change cluster state?
+  options:
+    A: etcd
+    B: kubelet
+    C: kube-scheduler
+    D: kube-apiserver
+  answer: D
+  explanation: >
+    The API server authenticates, authorizes, admits and audits every request before
+    anything is stored in etcd. Paths that bypass it, such as direct etcd access, the
+    kubelet API or the runtime socket, also bypass those controls.
+  references:
+    - https://kubernetes.io/docs/concepts/security/controlling-access/
+    - https://kubernetes.io/docs/concepts/security/api-server-bypass-risks/
+
+- id: kcsa-tm-003
+  domain: threat-model
+  topic: trust-boundaries
+  difficulty: medium
+  question: >
+    Which control-plane-to-node data flow is not protected against man-in-the-middle
+    attacks by default, unless the API server is given the CA that signs kubelet serving
+    certificates?
+  options:
+    A: "API server to kubelet, for exec, logs and port-forward"
+    B: "Scheduler to etcd, for writing Pod-to-node bindings"
+    C: "kubectl to etcd, for reading Secrets in a namespace"
+    D: "kube-proxy to the scheduler, for Service and endpoint updates"
+  answer: A
+  explanation: >
+    By default the API server does not verify the kubelet's serving certificate when it
+    connects for exec, logs or port-forward. Setting --kubelet-certificate-authority (or
+    tunnelling through Konnectivity) protects this path. The scheduler and kubectl never
+    talk to etcd directly.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/
+
+# ---------------------------------------------------------------- persistence (3)
+
+- id: kcsa-tm-004
+  domain: threat-model
+  topic: persistence
+  difficulty: hard
+  question: >
+    An attacker has root on a worker node and wants a workload that cannot be removed
+    through the API and comes back whenever the kubelet restarts. What are they most
+    likely to add?
+  options:
+    A: "A Job with backoffLimit set to zero"
+    B: "A ConfigMap in the kube-public namespace"
+    C: "A static Pod manifest in the kubelet's manifest directory"
+    D: "An Ingress that points at an external host"
+  answer: C
+  explanation: >
+    Static Pods are managed directly by the kubelet from files on the node. The API only
+    shows a read-only mirror Pod, and deleting it does not stop the kubelet from running
+    the Pod. Watch for unexpected files in the static Pod path.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/
+    - https://kubernetes.io/docs/concepts/security/api-server-bypass-risks/
+
+- id: kcsa-tm-005
+  domain: threat-model
+  topic: persistence
+  difficulty: easy
+  question: >
+    Which object would an attacker with cluster-wide create rights use to run a malicious
+    container on every node, including nodes added later?
+  options:
+    A: ReplicaSet
+    B: Job
+    C: DaemonSet
+    D: StatefulSet
+  answer: C
+  explanation: >
+    A DaemonSet runs one Pod per eligible node and automatically adds Pods to new nodes,
+    which makes it a convenient persistence mechanism. Monitor who can create DaemonSets,
+    especially in kube-system.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/
+
+- id: kcsa-tm-006
+  domain: threat-model
+  topic: persistence
+  difficulty: medium
+  question: >
+    An attacker gains permission to create MutatingWebhookConfigurations and registers
+    one pointing to their own server. Why does this give them persistence?
+  options:
+    A: "It can inject containers or settings into every new Pod"
+    B: "It replaces the cluster CA with an attacker-controlled CA"
+    C: "It turns off audit logging for all subsequent API requests"
+    D: "It copies all etcd data to the attacker's server each hour"
+  answer: A
+  explanation: >
+    A mutating webhook sees and can modify matching objects as they are created. An
+    attacker can add a malicious sidecar, mount Secrets or change images in every new
+    Pod, even after their original access is removed.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/
+    - https://kubernetes.io/docs/concepts/security/rbac-good-practices/
+
+# ---------------------------------------------------------------- denial-of-service (3)
+
+- id: kcsa-tm-007
+  domain: threat-model
+  topic: denial-of-service
+  difficulty: easy
+  question: Which setting stops a single container from using all of its node's memory?
+  options:
+    A: "A memory request with no limit"
+    B: "A liveness probe with a short period"
+    C: "A PodDisruptionBudget with minAvailable set to 1"
+    D: "A memory limit in the container's resources"
+  answer: D
+  explanation: >
+    A memory limit is enforced by the kernel: a container that exceeds it is OOM-killed
+    instead of starving its neighbours. A request only affects scheduling.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+- id: kcsa-tm-008
+  domain: threat-model
+  topic: denial-of-service
+  difficulty: medium
+  question: >
+    Which API server feature stops a misbehaving client or controller from flooding the
+    API server and starving other clients?
+  options:
+    A: "Pod Priority and Preemption"
+    B: "API Priority and Fairness"
+    C: "Horizontal Pod Autoscaling"
+    D: "Node-pressure eviction"
+  answer: B
+  explanation: >
+    API Priority and Fairness classifies requests into priority levels and queues them
+    fairly, so a flood from one client does not block others such as the kubelets or
+    system controllers. Pod priority deals with scheduling, not API requests.
+  references:
+    - https://kubernetes.io/docs/concepts/cluster-administration/flow-control/
+
+- id: kcsa-tm-009
+  domain: threat-model
+  topic: denial-of-service
+  difficulty: medium
+  question: >
+    A fork bomb in one container uses up all process IDs on its node, affecting other
+    Pods. Which control limits this?
+  options:
+    A: "A NetworkPolicy that denies all egress traffic"
+    B: "A ResourceQuota on the number of Services"
+    C: "Setting the Pod's restartPolicy to Never"
+    D: "A per-Pod PID limit set on the kubelet"
+  answer: D
+  explanation: >
+    The kubelet can cap the number of process IDs each Pod may use (podPidsLimit), and
+    can reserve PIDs for the node itself. This keeps one runaway workload from exhausting
+    the node's PID space.
+  references:
+    - https://kubernetes.io/docs/concepts/policy/pid-limiting/
+
+# ---------------------------------------------------------------- malicious-code (3)
+
+- id: kcsa-tm-010
+  domain: threat-model
+  topic: malicious-code
+  difficulty: easy
+  question: >
+    Which tool detects suspicious behaviour inside running containers, such as a shell
+    starting in a production Pod?
+  options:
+    A: Trivy
+    B: Falco
+    C: kube-bench
+    D: cosign
+  answer: B
+  explanation: >
+    Falco is a CNCF runtime security tool that watches system calls and Kubernetes events
+    and alerts on rules such as "shell spawned in a container". Trivy scans artifacts,
+    kube-bench checks configuration and cosign signs images.
+  references:
+    - https://falco.org/about/
+
+- id: kcsa-tm-011
+  domain: threat-model
+  topic: malicious-code
+  difficulty: medium
+  question: >
+    A compromised web app tries to download a tool and run it inside its container.
+    Which settings make this harder?
+  options:
+    A: "A read-only root filesystem and a non-root user"
+    B: "imagePullPolicy: Always and more replicas"
+    C: "A ClusterIP Service and a readiness probe"
+    D: "A larger memory limit and a long termination grace period"
+  answer: A
+  explanation: >
+    With a read-only root filesystem the attacker cannot write files outside mounted
+    volumes, and a non-root user cannot install packages or touch privileged paths.
+    Restricting egress would further block the download itself.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+
+- id: kcsa-tm-012
+  domain: threat-model
+  topic: malicious-code
+  difficulty: medium
+  question: >
+    Which seccomp profile does the Restricted Pod Security Standard accept as a minimum to
+    limit the system calls malicious code can make?
+  options:
+    A: "Unconfined, so the application can use any syscall it needs"
+    B: "Disabled, with AppArmor used as the replacement"
+    C: "RuntimeDefault, the container runtime's default profile"
+    D: "Privileged, inherited from the node's own settings"
+  answer: C
+  explanation: >
+    Restricted requires the seccomp profile type to be RuntimeDefault or Localhost; it
+    forbids Unconfined. The runtime's default profile blocks many rarely needed syscalls
+    that are often used in kernel exploits.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-standards/
+    - https://kubernetes.io/docs/tutorials/security/seccomp/
+
+# ---------------------------------------------------------------- network-attacker (2)
+
+- id: kcsa-tm-013
+  domain: threat-model
+  topic: network-attacker
+  difficulty: medium
+  question: Why is it recommended that containers drop the NET_RAW capability?
+  options:
+    A: "It allows crafting raw packets, e.g. to spoof traffic"
+    B: "It lets the process bind to ports below 1024"
+    C: "It is needed to mount NFS volumes in the Pod"
+    D: "It grants read access to the node's log files"
+  answer: A
+  explanation: >
+    NET_RAW allows raw and packet sockets, which an attacker in a compromised container
+    can use for spoofing and other attacks on the Pod network. Few applications need it,
+    and the Restricted standard drops all capabilities. Binding low ports is
+    NET_BIND_SERVICE.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+    - https://kubernetes.io/docs/concepts/security/pod-security-standards/
+
+- id: kcsa-tm-014
+  domain: threat-model
+  topic: network-attacker
+  difficulty: medium
+  question: >
+    An attacker on the Pod network tries to impersonate a backend service to its clients.
+    Which measure lets clients verify they are talking to the real backend?
+  options:
+    A: "A NodePort Service in front of the backend"
+    B: "A readiness probe on the backend Pods"
+    C: "Mutual TLS between workloads, e.g. via a service mesh"
+    D: "A DNS search domain for the backend's namespace"
+  answer: C
+  explanation: >
+    With mTLS each side presents a certificate tied to a workload identity, so a client
+    can verify the server (and vice versa) and traffic is encrypted. Services, probes and
+    DNS settings do not authenticate the peer.
+  references:
+    - https://istio.io/latest/docs/concepts/security/
+    - https://linkerd.io/2/features/automatic-mtls/
+
+# ---------------------------------------------------------------- sensitive-data (3)
+
+- id: kcsa-tm-015
+  domain: threat-model
+  topic: sensitive-data
+  difficulty: medium
+  question: Why is granting the list verb on Secrets almost as risky as granting get?
+  options:
+    A: "list lets the user decrypt etcd snapshots offline"
+    B: "A list response includes each Secret's data"
+    C: "list also grants write access to Secrets"
+    D: "list returns the encryption-at-rest key"
+  answer: B
+  explanation: >
+    Listing Secrets returns the full objects, including their data, for the whole
+    namespace (or cluster). watch has the same effect. RBAC for Secrets should be scoped
+    to specific resourceNames where possible.
+  references:
+    - https://kubernetes.io/docs/concepts/security/rbac-good-practices/
+
+- id: kcsa-tm-016
+  domain: threat-model
+  topic: sensitive-data
+  difficulty: easy
+  question: >
+    Even when credentials are kept in Secret objects, where do they commonly leak by
+    accident?
+  options:
+    A: "Into the Pod's PriorityClass"
+    B: "Into the node's taints"
+    C: "Into the cluster's EndpointSlices"
+    D: "Into application logs and errors"
+  answer: D
+  explanation: >
+    Applications that print their configuration, errors that echo connection strings and
+    debug output are common ways secrets end up in log systems with much weaker access
+    control than the Secret itself.
+  references:
+    - https://kubernetes.io/docs/concepts/security/secrets-good-practices/
+
+- id: kcsa-tm-017
+  domain: threat-model
+  topic: sensitive-data
+  difficulty: hard
+  question: >
+    In a cluster without encryption at rest, which access gives an attacker every Secret
+    regardless of RBAC?
+  options:
+    A: "get on Pods in the default namespace"
+    B: "Read access to etcd's data or snapshots"
+    C: "Access to the kube-scheduler's metrics port"
+    D: "Read access to kube-proxy's ConfigMap"
+  answer: B
+  explanation: >
+    RBAC is enforced by the API server. etcd holds every object, so reading it directly
+    or from a backup exposes all Secrets in plaintext when encryption at rest is not
+    configured. With encryption at rest, the attacker would also need the key.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
+    - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
+
+# ---------------------------------------------------------------- privilege-escalation (3)
+
+- id: kcsa-tm-018
+  domain: threat-model
+  topic: privilege-escalation
+  difficulty: easy
+  question: >
+    Which container setting gives a process nearly all of the host's capabilities and
+    access to host devices?
+  options:
+    A: "runAsNonRoot: true"
+    B: "readOnlyRootFilesystem: true"
+    C: "allowPrivilegeEscalation: false"
+    D: "privileged: true"
+  answer: D
+  explanation: >
+    A privileged container disables most isolation: it gets all capabilities and access
+    to host devices, making escape to the node straightforward. Both Baseline and
+    Restricted forbid it.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-standards/
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+
+- id: kcsa-tm-019
+  domain: threat-model
+  topic: privilege-escalation
+  difficulty: medium
+  question: >
+    Which RBAC verbs let a user create or bind roles granting more permissions than they
+    hold themselves?
+  options:
+    A: "escalate and bind"
+    B: "get, list and watch"
+    C: "watch and patch"
+    D: "proxy and create"
+  answer: A
+  explanation: >
+    RBAC normally stops users from granting permissions they don't have. The escalate
+    verb on roles and the bind verb on roles or clusterroles lift that restriction, so
+    they should be granted very sparingly.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+    - https://kubernetes.io/docs/concepts/security/rbac-good-practices/
+
+- id: kcsa-tm-020
+  domain: threat-model
+  topic: privilege-escalation
+  difficulty: hard
+  question: >
+    A Pod is created with hostPID: true and privileged: true. Why is this a direct path
+    to node compromise?
+  options:
+    A: "It can schedule itself onto any node, including control plane ones"
+    B: "Its ServiceAccount is promoted to cluster-admin"
+    C: "It can enter host processes and act as root on the node"
+    D: "It can rewrite the RBAC Roles in its own namespace"
+  answer: C
+  explanation: >
+    hostPID shares the node's process namespace, and privileged removes most isolation.
+    Together they let the container use tools such as nsenter on PID 1 to get a root
+    shell on the node, and from there reach the kubelet's credentials.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-standards/
+    - https://kubernetes.io/docs/concepts/security/linux-kernel-security-constraints/

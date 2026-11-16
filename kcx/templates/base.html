@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}KC-X{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header><a href="{{ url_for('kcx.home') }}"><strong>KC-X</strong></a> &middot; mock exams for KCNA / KCSA</header>
+  <main>{% block content %}{% endblock %}</main>
+  <footer>Not affiliated with CNCF or The Linux Foundation. Original practice questions only.</footer>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

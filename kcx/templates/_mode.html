@@ -1,0 +1,3 @@
+{# Attempt mode label, e.g. "exam", "drill: Container Orchestration", "mistakes". Needs `attempt` and `cert`. #}
+{%- set _dom = cert.domain(attempt.domain) if cert and attempt.domain else none -%}
+{{ attempt.mode }}{% if _dom %}: {{ _dom.name }}{% elif attempt.domain %}: {{ attempt.domain }}{% endif %}

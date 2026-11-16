@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Result &middot; KC-X{% endblock %}
+{% block content %}
+<h1>Result</h1>
+<section class="summary">
+  <p class="score {{ 'ok' if attempt.passed else 'fail' }}">{{ "%.1f"|format(attempt.score_pct) }}% &middot; {{ "PASS" if attempt.passed else "FAIL" }}</p>
+  <p>{{ cert.name if cert else attempt.cert|upper }} &middot; {% include "_mode.html" %}
+     &middot; {{ correct }} of {{ items|length }} correct
+     {% if cert %}&middot; pass mark {{ cert.pass_pct }}%{% endif %}
+     &middot; time used {{ time_used|clock }}{% if attempt.duration_sec %} of {{ attempt.duration_sec|clock }}{% endif %}
+     &middot; started {{ attempt.started_at|when }}</p>
+  <p><a href="{{ url_for('kcx.home') }}">&larr; Home</a></p>
+</section>
+
+{% for item in items %}
+{% set row = item.row %}{% set q = item.q %}
+<article class="result-q {{ 'right' if row.is_correct else 'wrong' }}" id="q{{ row.position }}">
+  <h2>{{ row.position }}. {% if row.is_correct %}<span class="ok">Correct</span>{% elif row.selected %}<span class="fail">Wrong</span>{% else %}<span class="fail">Unanswered</span>{% endif %}</h2>
+  {% if q %}
+  <p class="question">{{ q.question }}</p>
+  <ul class="options">
+    {% for key, text in item.options %}
+    <li class="{% if key == q.answer %}correct{% endif %} {% if key == row.selected and key != q.answer %}chosen-wrong{% endif %}">
+      <span class="slot">{{ "ABCD"[loop.index0] }}.</span> {{ text }}
+      {% if key == q.answer %}<strong>&check; correct answer</strong>{% endif %}
+      {% if key == row.selected %}<em>(your answer)</em>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="explanation">{{ q.explanation }}</p>
+  <p class="refs">References:
+    {% for ref in q.references %}<a href="{{ ref }}" rel="noopener noreferrer" target="_blank">{{ ref }}</a>{% if not loop.last %}, {% endif %}{% endfor %}</p>
+  {% else %}
+  <p class="removed">Question removed from the bank ({{ row.question_id }}). Stored result: {{ "correct" if row.is_correct else "wrong" }}.</p>
+  {% endif %}
+</article>
+{% endfor %}
+{% endblock %}

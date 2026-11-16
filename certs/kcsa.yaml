@@ -1,0 +1,85 @@
+# KCSA — Kubernetes and Cloud Native Security Associate
+# Sources (checked 2026-11-13):
+#   - Domains, weights, competencies, duration:
+#     https://training.linuxfoundation.org/certification/kubernetes-and-cloud-native-security-associate-kcsa/
+#   - question_count / pass_pct: widely reported by secondary sources (not on the LF cert page).
+id: kcsa
+name: Kubernetes and Cloud Native Security Associate (KCSA)
+duration_min: 90
+question_count: 60
+pass_pct: 75
+last_verified: 2026-11-13
+domains:
+  - id: cn-security-overview
+    abbr: ov
+    name: Overview of Cloud Native Security
+    weight: 14
+    topics:
+      - {id: four-cs, name: The 4Cs of Cloud Native Security}
+      - {id: cloud-provider-infra, name: Cloud Provider and Infrastructure Security}
+      - {id: controls-frameworks, name: Controls and Frameworks}
+      - {id: isolation-techniques, name: Isolation Techniques}
+      - {id: artifact-image-security, name: Artifact Repository and Image Security}
+      - {id: workload-code-security, name: Workload and Application Code Security}
+  - id: cluster-component-security
+    abbr: cc
+    name: Kubernetes Cluster Component Security
+    weight: 22
+    topics:
+      - {id: api-server, name: API Server}
+      - {id: controller-manager, name: Controller Manager}
+      - {id: scheduler, name: Scheduler}
+      - {id: kubelet, name: Kubelet}
+      - {id: container-runtime, name: Container Runtime}
+      - {id: kube-proxy, name: KubeProxy}
+      - {id: pod, name: Pod}
+      - {id: etcd, name: Etcd}
+      - {id: container-networking, name: Container Networking}
+      - {id: client-security, name: Client Security}
+      - {id: storage, name: Storage}
+  - id: security-fundamentals
+    abbr: sf
+    name: Kubernetes Security Fundamentals
+    weight: 22
+    topics:
+      - {id: pod-security-standards, name: Pod Security Standards}
+      - {id: pod-security-admission, name: Pod Security Admissions}
+      - {id: authentication, name: Authentication}
+      - {id: authorization, name: Authorization}
+      - {id: secrets, name: Secrets}
+      - {id: isolation-segmentation, name: Isolation and Segmentation}
+      - {id: audit-logging, name: Audit Logging}
+      - {id: network-policy, name: Network Policy}
+  - id: threat-model
+    abbr: tm
+    name: Kubernetes Threat Model
+    weight: 16
+    topics:
+      - {id: trust-boundaries, name: Kubernetes Trust Boundaries and Data Flow}
+      - {id: persistence, name: Persistence}
+      - {id: denial-of-service, name: Denial of Service}
+      - {id: malicious-code, name: Malicious Code Execution and Compromised Applications in Containers}
+      - {id: network-attacker, name: Attacker on the Network}
+      - {id: sensitive-data, name: Access to Sensitive Data}
+      - {id: privilege-escalation, name: Privilege Escalation}
+  - id: platform-security
+    abbr: ps
+    name: Platform Security
+    weight: 16
+    topics:
+      - {id: supply-chain, name: Supply Chain Security}
+      - {id: image-repository, name: Image Repository}
+      - {id: observability, name: Observability}
+      - {id: service-mesh, name: Service Mesh}
+      - {id: pki, name: PKI}
+      - {id: connectivity, name: Connectivity}
+      - {id: admission-control, name: Admission Control}
+  - id: compliance-frameworks
+    abbr: cf
+    name: Compliance and Security Frameworks
+    weight: 10
+    topics:
+      - {id: compliance-frameworks, name: Compliance Frameworks}
+      - {id: threat-modelling, name: Threat Modelling Frameworks}
+      - {id: supply-chain-compliance, name: Supply Chain Compliance}
+      - {id: automation-tooling, name: Automation and Tooling}

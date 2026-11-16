@@ -1,0 +1,58 @@
+# KCNA — Kubernetes and Cloud Native Associate
+# Sources (checked 2026-11-13):
+#   - Domains, weights, topics, duration: https://training.linuxfoundation.org/certification/kubernetes-cloud-native-associate/
+#   - Curriculum change (effective on/after 2025-11-24): https://training.linuxfoundation.org/kcna-program-changes/
+#   - question_count / pass_pct: widely reported by secondary sources (not on the LF cert page).
+id: kcna
+name: Kubernetes and Cloud Native Associate (KCNA)
+duration_min: 90
+question_count: 60
+pass_pct: 75
+last_verified: 2026-11-13
+domains:
+  - id: k8s-fundamentals
+    abbr: kf
+    name: Kubernetes Fundamentals
+    weight: 44
+    topics:
+      - id: core-concepts
+        name: Kubernetes Core Concepts
+      - id: administration
+        name: Administration
+      - id: scheduling
+        name: Scheduling
+      - id: containerization
+        name: Containerization
+  - id: container-orchestration
+    abbr: co
+    name: Container Orchestration
+    weight: 28
+    topics:
+      - id: networking
+        name: Networking
+      - id: security
+        name: Security
+      - id: troubleshooting
+        name: Troubleshooting
+      - id: storage
+        name: Storage
+  - id: app-delivery
+    abbr: ad
+    name: Cloud Native Application Delivery
+    weight: 16
+    topics:
+      - id: application-delivery
+        name: Application Delivery
+      - id: debugging
+        name: Debugging
+  - id: cn-architecture
+    abbr: ca
+    name: Cloud Native Architecture
+    weight: 12
+    topics:
+      - id: observability
+        name: Observability
+      - id: ecosystem-principles
+        name: Cloud Native Ecosystem and Principles
+      - id: community-collaboration
+        name: Cloud Native Community and Collaboration

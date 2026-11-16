@@ -1,0 +1,247 @@
+# KCSA — Compliance and Security Frameworks (10%) — 12 questions
+# Topics: compliance-frameworks 3 · threat-modelling 3 · supply-chain-compliance 3 · automation-tooling 3
+# Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
+
+# ---------------------------------------------------------------- compliance-frameworks (3)
+
+- id: kcsa-cf-001
+  domain: compliance-frameworks
+  topic: compliance-frameworks
+  difficulty: easy
+  question: What does the CIS Kubernetes Benchmark provide?
+  options:
+    A: "A certification exam for Kubernetes administrators"
+    B: "A list of known CVEs in each Kubernetes release"
+    C: "A performance test suite for cluster networking"
+    D: "Consensus hardening recommendations for components"
+  answer: D
+  explanation: >
+    The Center for Internet Security publishes consensus-based configuration guidance for
+    the API server, etcd, kubelet and other components, with a rationale and an audit
+    check for each recommendation.
+  references:
+    - https://www.cisecurity.org/benchmark/kubernetes
+
+- id: kcsa-cf-002
+  domain: compliance-frameworks
+  topic: compliance-frameworks
+  difficulty: medium
+  question: Which NIST publication is the Application Container Security Guide?
+  options:
+    A: "NIST SP 800-53"
+    B: "NIST SP 800-190"
+    C: "NIST SP 800-218"
+    D: "NIST SP 800-63"
+  answer: B
+  explanation: >
+    SP 800-190 covers risks and countermeasures for images, registries, orchestrators,
+    containers and host OSes. SP 800-53 is a general catalogue of security controls,
+    SP 800-218 is the Secure Software Development Framework and SP 800-63 covers digital
+    identity.
+  references:
+    - https://csrc.nist.gov/pubs/sp/800/190/final
+
+- id: kcsa-cf-003
+  domain: compliance-frameworks
+  topic: compliance-frameworks
+  difficulty: medium
+  question: Which six functions organize the NIST Cybersecurity Framework (CSF) 2.0?
+  options:
+    A: "Govern, Identify, Protect, Detect, Respond, Recover"
+    B: "Plan, Build, Test, Deploy, Monitor, Improve"
+    C: "Assess, Harden, Monitor, Detect, Contain, Restore"
+    D: "Identify, Classify, Encrypt, Audit, Report, Archive"
+  answer: A
+  explanation: >
+    CSF 2.0 added Govern to the original five functions (Identify, Protect, Detect,
+    Respond, Recover). The functions give organizations a common way to describe and
+    improve their cybersecurity outcomes.
+  references:
+    - https://www.nist.gov/cyberframework
+
+# ---------------------------------------------------------------- threat-modelling (3)
+
+- id: kcsa-cf-004
+  domain: compliance-frameworks
+  topic: threat-modelling
+  difficulty: easy
+  question: >
+    In the STRIDE threat model, which category covers a user denying they performed an
+    action when there is no record to prove it?
+  options:
+    A: Spoofing
+    B: Tampering
+    C: Repudiation
+    D: Information disclosure
+  answer: C
+  explanation: >
+    STRIDE stands for Spoofing, Tampering, Repudiation, Information disclosure, Denial of
+    service and Elevation of privilege. Repudiation threats are countered with
+    trustworthy logging, such as Kubernetes audit logs kept outside the cluster.
+  references:
+    - https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-threats
+
+- id: kcsa-cf-005
+  domain: compliance-frameworks
+  topic: threat-modelling
+  difficulty: easy
+  question: >
+    Which knowledge base catalogues real-world attacker tactics and techniques and
+    includes a matrix specific to containers?
+  options:
+    A: "MITRE ATT&CK"
+    B: "The CVE list"
+    C: "CVSS"
+    D: "OWASP Top 10"
+  answer: A
+  explanation: >
+    MITRE ATT&CK organizes adversary behaviour into tactics (goals) and techniques
+    (methods), and its Containers matrix covers techniques against container platforms.
+    CVE identifies individual vulnerabilities and CVSS scores their severity.
+  references:
+    - https://attack.mitre.org/matrices/enterprise/containers/
+    - https://www.microsoft.com/en-us/security/blog/2020/04/02/attack-matrix-kubernetes/
+
+- id: kcsa-cf-006
+  domain: compliance-frameworks
+  topic: threat-modelling
+  difficulty: medium
+  question: When does threat modelling provide the most value?
+  options:
+    A: "Only after a security incident has happened"
+    B: "Once a year, during the compliance audit"
+    C: "During design, revisited as the architecture changes"
+    D: "Only once the system is running in production"
+  answer: C
+  explanation: >
+    Threat modelling identifies trust boundaries, data flows and likely attacks while
+    changes are still cheap. It should be updated whenever the architecture changes, not
+    done once or only after an incident.
+  references:
+    - https://github.com/cncf/tag-security/tree/main/community/resources/security-whitepaper
+    - https://learn.microsoft.com/en-us/azure/security/develop/threat-modeling-tool-threats
+
+# ---------------------------------------------------------------- supply-chain-compliance (3)
+
+- id: kcsa-cf-007
+  domain: compliance-frameworks
+  topic: supply-chain-compliance
+  difficulty: easy
+  question: Which two formats are the most widely used standards for SBOMs?
+  options:
+    A: "SARIF and JUnit XML"
+    B: "OCI and CRI"
+    C: "STIX and TAXII"
+    D: "SPDX and CycloneDX"
+  answer: D
+  explanation: >
+    SPDX (a Linux Foundation project and ISO standard) and CycloneDX (from OWASP) are the
+    main SBOM formats. SARIF is for static analysis results, and STIX/TAXII are for
+    sharing threat intelligence.
+  references:
+    - https://spdx.dev/
+    - https://cyclonedx.org/
+
+- id: kcsa-cf-008
+  domain: compliance-frameworks
+  topic: supply-chain-compliance
+  difficulty: medium
+  question: >
+    Which NIST framework describes secure software development practices that software
+    suppliers are often asked to attest to?
+  options:
+    A: "The Cybersecurity Framework (CSF)"
+    B: "The SSDF, SP 800-218"
+    C: "SP 800-190"
+    D: "The Privacy Framework"
+  answer: B
+  explanation: >
+    The Secure Software Development Framework (SSDF, NIST SP 800-218) lists practices for
+    preparing the organization, protecting software, producing well-secured software and
+    responding to vulnerabilities.
+  references:
+    - https://csrc.nist.gov/pubs/sp/800/218/final
+
+- id: kcsa-cf-009
+  domain: compliance-frameworks
+  topic: supply-chain-compliance
+  difficulty: hard
+  question: >
+    A scanner reports 40 CVEs in an image from its SBOM. What does a VEX (Vulnerability
+    Exploitability eXchange) document add?
+  options:
+    A: "A signature proving who built the image"
+    B: "A list of every file inside the image"
+    C: "Whether each CVE actually affects the product"
+    D: "A record of which cluster nodes have run the image"
+  answer: C
+  explanation: >
+    VEX lets a supplier state, per vulnerability, whether the product is affected, not
+    affected (with a justification), fixed or under investigation. This cuts noise from
+    SBOM-based scans where the vulnerable code is present but not reachable.
+  references:
+    - https://openvex.dev/
+    - https://www.cisa.gov/sbom
+
+# ---------------------------------------------------------------- automation-tooling (3)
+
+- id: kcsa-cf-010
+  domain: compliance-frameworks
+  topic: automation-tooling
+  difficulty: easy
+  question: Which tool checks a cluster's configuration against the CIS Kubernetes Benchmark?
+  options:
+    A: kube-bench
+    B: Falco
+    C: cosign
+    D: Helm
+  answer: A
+  explanation: >
+    kube-bench runs the CIS Benchmark checks on control plane and worker nodes and reports
+    pass, fail or warn for each. Falco is runtime detection, cosign signs artifacts and
+    Helm is a package manager.
+  references:
+    - https://github.com/aquasecurity/kube-bench
+
+- id: kcsa-cf-011
+  domain: compliance-frameworks
+  topic: automation-tooling
+  difficulty: easy
+  question: >
+    Which pair of tools are policy engines commonly run as Kubernetes admission
+    controllers?
+  options:
+    A: "Prometheus and Alertmanager"
+    B: "OPA Gatekeeper and Kyverno"
+    C: "Falco and Trivy"
+    D: "Argo CD and Flux"
+  answer: B
+  explanation: >
+    Gatekeeper (Rego policies) and Kyverno (YAML policies) run as admission webhooks to
+    validate, mutate or reject resources, and can audit existing ones. Prometheus and
+    Grafana are monitoring tools, Falco and Trivy do detection and scanning, and Argo CD
+    and Flux do GitOps delivery.
+  references:
+    - https://open-policy-agent.github.io/gatekeeper/website/docs/
+    - https://kyverno.io/docs/introduction/
+
+- id: kcsa-cf-012
+  domain: compliance-frameworks
+  topic: automation-tooling
+  difficulty: medium
+  question: >
+    Why run policy checks on Kubernetes manifests in the CI pipeline as well as at
+    admission time?
+  options:
+    A: "Admission controllers can't check Pod security settings"
+    B: "CI checks remove the need for RBAC in the cluster"
+    C: "The API server only accepts manifests scanned in CI"
+    D: "Developers get feedback before changes reach a cluster"
+  answer: D
+  explanation: >
+    Checking in CI shifts feedback left, so problems are fixed in the pull request.
+    Admission control is still needed as the enforcement point, because not every change
+    passes through CI.
+  references:
+    - https://kubescape.io/docs/
+    - https://kyverno.io/docs/introduction/

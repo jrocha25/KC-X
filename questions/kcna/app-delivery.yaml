@@ -1,0 +1,385 @@
+# KCNA — Cloud Native Application Delivery (16%) — 20 questions
+# Topics: application-delivery 13 · debugging 7
+# Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
+
+# --------------------------------------------------------- application-delivery (13)
+
+- id: kcna-ad-001
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: Which statement reflects a core GitOps principle as defined by the OpenGitOps project?
+  options:
+    A: "Engineers apply each change to production with kubectl from their own laptops"
+    B: "Desired state is declared in Git, pulled by agents and continuously reconciled"
+    C: "CI pipelines push every new version directly into the cluster with admin credentials"
+    D: Configuration is stored in a database and edited through a web UI only
+  answer: B
+  explanation: >
+    The four OpenGitOps principles are - declarative, versioned and immutable, pulled
+    automatically, and continuously reconciled. Agents in the environment pull the desired
+    state and correct any drift.
+  references:
+    - https://opengitops.dev/
+
+- id: kcna-ad-002
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: Argo CD and Flux are best described as what kind of tools?
+  options:
+    A: "Container runtimes that implement the Kubernetes CRI"
+    B: "Service meshes for east-west traffic management"
+    C: GitOps continuous delivery tools for Kubernetes
+    D: "Time-series databases for cluster metrics"
+  answer: C
+  explanation: >
+    Argo CD and Flux are CNCF graduated projects that keep a Kubernetes cluster in sync with
+    configuration stored in Git (or OCI repositories).
+  references:
+    - https://argo-cd.readthedocs.io/
+    - https://fluxcd.io/
+
+- id: kcna-ad-003
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: In Helm, what is a chart?
+  options:
+    A: "A package of templated Kubernetes manifests and their default values"
+    B: "A dashboard that graphs the release's resource usage over time"
+    C: "A running instance of a packaged application inside the cluster"
+    D: A container image stored in a registry
+  answer: A
+  explanation: >
+    A chart is a Helm package - Chart.yaml metadata, templates and a values.yaml file. Installing a
+    chart into a cluster creates a release; each upgrade creates a new revision.
+  references:
+    - https://helm.sh/docs/intro/using_helm/
+
+- id: kcna-ad-004
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: An upgrade of the Helm release shop broke the application. Which command returns it to revision 3?
+  options:
+    A: helm undo shop 3
+    B: helm upgrade shop --revision 3
+    C: helm restore shop 3
+    D: helm rollback shop 3
+  answer: D
+  explanation: >
+    helm rollback <release> <revision> rolls a release back to an earlier revision; helm
+    history <release> lists the available revisions.
+  references:
+    - https://helm.sh/docs/helm/helm_rollback/
+
+- id: kcna-ad-005
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: How does Kustomize customize Kubernetes manifests for different environments?
+  options:
+    A: "By rendering Go templates with values supplied in a values.yaml file"
+    B: "By applying patches and overlays to plain YAML, with no templates"
+    C: "By generating manifests at deploy time from a Python script"
+    D: "By storing a separate copy of each environment's manifests in etcd"
+  answer: B
+  explanation: >
+    Kustomize is template-free - a kustomization.yaml lists base resources and applies
+    overlays, patches, name prefixes, labels and generators. It is built into kubectl via
+    kubectl apply -k.
+  references:
+    - https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/
+
+- id: kcna-ad-006
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: hard
+  question: >
+    A Deployment has 4 replicas and uses the RollingUpdate strategy with maxSurge 25% and
+    maxUnavailable 25%. During an update, what are the maximum total Pods and the minimum
+    available Pods?
+  options:
+    A: At most 5 Pods in total, at least 3 available
+    B: At most 4 Pods in total, at least 4 available
+    C: At most 6 Pods in total, at least 2 available
+    D: At most 8 Pods in total, at least 0 available
+  answer: A
+  explanation: >
+    maxSurge is rounded up - 25% of 4 is 1, so at most 4 + 1 = 5 Pods. maxUnavailable is
+    rounded down - 25% of 4 is 1, so at least 4 - 1 = 3 Pods stay available. 25%/25% are
+    also the defaults.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-ad-007
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: >
+    The new version of an application cannot run alongside the old one because of an
+    incompatible schema change. Which Deployment strategy kills all old Pods before
+    creating new ones?
+  options:
+    A: RollingUpdate
+    B: Canary
+    C: Recreate
+    D: OnDelete
+  answer: C
+  explanation: >
+    The Recreate strategy terminates all existing Pods before new ones are created, which
+    causes downtime but avoids running two versions at once. RollingUpdate is the default.
+    OnDelete is a StatefulSet and DaemonSet strategy.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-ad-008
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: Which command reverts the Deployment web to its previous revision?
+  options:
+    A: kubectl rollout undo deployment/web
+    B: kubectl rollback deployment/web
+    C: kubectl delete deployment/web --previous
+    D: kubectl apply --undo deployment/web
+  answer: A
+  explanation: >
+    kubectl rollout undo returns a Deployment to the previous revision (or to a specific
+    one with --to-revision). kubectl rollout history lists revisions.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-ad-009
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: Which description matches a blue/green deployment?
+  options:
+    A: "New Pods gradually replace old Pods a few at a time until all are updated"
+    B: A small percentage of users is routed to the new version while metrics are watched
+    C: All old Pods are stopped before any new Pod starts
+    D: "Two full environments run side by side and traffic switches over at once"
+  answer: D
+  explanation: >
+    Blue/green keeps the current (blue) and new (green) versions fully deployed and flips
+    traffic between them, for example by changing a Service selector. Rollback is just
+    switching back.
+  references:
+    - https://glossary.cncf.io/blue-green-deployment/
+
+- id: kcna-ad-010
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: What is a canary deployment?
+  options:
+    A: "Releasing to a small share of traffic first, then expanding if healthy"
+    B: "Running old and new versions side by side, then switching all traffic at once"
+    C: Running a deployment in a separate cluster used only for testing
+    D: "Deploying every microservice at the same time in one coordinated release"
+  answer: A
+  explanation: >
+    A canary release sends a small share of traffic to the new version and watches error
+    rates and latency before promoting it to everyone. Tools such as Argo Rollouts and
+    Flagger automate this.
+  references:
+    - https://glossary.cncf.io/canary-deployment/
+    - https://kubernetes.io/docs/concepts/workloads/management/
+
+- id: kcna-ad-011
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: What is the main goal of continuous integration (CI)?
+  options:
+    A: "Automatically scaling Pods up and down based on the current load"
+    B: "Merging changes often and building and testing each one automatically"
+    C: "Encrypting all traffic between services using automatically rotated mutual TLS"
+    D: "Collecting and storing application logs for long-term analysis"
+  answer: B
+  explanation: >
+    CI integrates developers' changes into a shared branch often, with every change built
+    and tested automatically so problems are found early. Continuous delivery extends this
+    so every validated change can be released.
+  references:
+    - https://glossary.cncf.io/continuous-integration/
+
+- id: kcna-ad-012
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    You create a HorizontalPodAutoscaler that targets 70% CPU utilization, but it reports
+    the current utilization as unknown. What is a common missing prerequisite?
+  options:
+    A: "metrics-server (or another resource metrics API provider)"
+    B: "A LoadBalancer Service exposing the target Deployment"
+    C: "A StatefulSet as the scale target, because Deployments cannot be autoscaled"
+    D: "A PersistentVolumeClaim where the HPA stores its history"
+  answer: A
+  explanation: >
+    The HPA reads CPU and memory usage from the resource metrics API, typically provided by
+    metrics-server. The target Pods also need CPU requests, because utilization is computed
+    as a percentage of the request.
+  references:
+    - https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+
+- id: kcna-ad-013
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: hard
+  question: >
+    Compared with a CI pipeline that pushes manifests into the cluster, what is a key
+    security benefit of the pull-based model used by GitOps agents?
+  options:
+    A: "Container images no longer need to be signed or scanned"
+    B: "RBAC is no longer needed for anything inside the cluster"
+    C: "The CI system never needs credentials for the cluster"
+    D: "Network policies are generated and applied automatically"
+  answer: C
+  explanation: >
+    With pull-based delivery the in-cluster agent (Argo CD, Flux) fetches the desired state
+    and applies it with its own in-cluster permissions. The CI system needs only write
+    access to Git or the registry, not admin credentials for the cluster.
+  references:
+    - https://opengitops.dev/
+    - https://fluxcd.io/flux/concepts/
+
+# -------------------------------------------------------------------- debugging (7)
+
+- id: kcna-ad-014
+  domain: app-delivery
+  topic: debugging
+  difficulty: easy
+  question: Which command opens an interactive shell inside the running Pod web-7d9f?
+  options:
+    A: kubectl attach web-7d9f --shell
+    B: kubectl run web-7d9f -- sh
+    C: kubectl ssh web-7d9f
+    D: kubectl exec -it web-7d9f -- sh
+  answer: D
+  explanation: >
+    kubectl exec runs a command in an existing container. -i keeps stdin open and -t
+    allocates a TTY; everything after -- is the command. Add -c <container> for multi-container
+    Pods.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-application/get-shell-running-container/
+
+- id: kcna-ad-015
+  domain: app-delivery
+  topic: debugging
+  difficulty: easy
+  question: >
+    You want to test a Pod's web endpoint from your laptop without creating a Service or
+    an Ingress. Which command helps?
+  options:
+    A: kubectl expose pod web --port 8080
+    B: kubectl port-forward pod/web 8080:80
+    C: "kubectl proxy-pod web --local-port 8080"
+    D: kubectl tunnel web 8080
+  answer: B
+  explanation: >
+    kubectl port-forward forwards a local port (8080) to a port in the Pod (80) through the
+    API server, which is handy for debugging. kubectl expose would create a Service.
+  references:
+    - https://kubernetes.io/docs/tasks/access-application-cluster/port-forward-access-application-cluster/
+
+- id: kcna-ad-016
+  domain: app-delivery
+  topic: debugging
+  difficulty: hard
+  question: >
+    A Pod runs a distroless image that has no shell, so kubectl exec fails. How can you
+    troubleshoot inside the Pod without changing its image?
+  options:
+    A: "Use kubectl debug to add an ephemeral debug container to the Pod"
+    B: Edit the Pod spec to add a new regular container while it runs
+    C: "Use kubectl cp to copy a static bash binary into the running container"
+    D: "Restart the Pod with privileged set to true so exec gets a shell"
+  answer: A
+  explanation: >
+    Ephemeral containers can be added to a running Pod (regular containers cannot).
+    kubectl debug -it <pod> --image=busybox --target=<container> starts one, optionally
+    sharing the target container's process namespace.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/ephemeral-containers/
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/
+
+- id: kcna-ad-017
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: >
+    The Pod api has two containers, app and envoy. Which command shows the logs of the app
+    container only?
+  options:
+    A: kubectl logs api/app
+    B: kubectl logs api --all
+    C: kubectl logs api -c app
+    D: kubectl describe api app
+  answer: C
+  explanation: >
+    For multi-container Pods, kubectl logs needs -c (or --container) to pick a container;
+    --all-containers prints all of them.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/
+
+- id: kcna-ad-018
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: >
+    A Helm chart install fails with a confusing manifest error. Which command renders the
+    chart's templates locally so you can inspect the generated YAML?
+  options:
+    A: helm status
+    B: helm template
+    C: helm repo update
+    D: helm lint --apply
+  answer: B
+  explanation: >
+    helm template renders the chart with the supplied values and prints the resulting
+    manifests without contacting the cluster. helm install --dry-run and helm lint are
+    also useful.
+  references:
+    - https://helm.sh/docs/helm/helm_template/
+
+- id: kcna-ad-019
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: Which command lists recent events in the current namespace, sorted by creation time?
+  options:
+    A: "kubectl logs --events --sort=creationTimestamp"
+    B: "kubectl describe events --latest --namespace current"
+    C: "kubectl top events --sort-by=.metadata.creationTimestamp"
+    D: kubectl get events --sort-by=.metadata.creationTimestamp
+  answer: D
+  explanation: >
+    Events are API objects recording state changes and errors (scheduling, pulls, probe
+    failures). kubectl get events with --sort-by on a JSONPath field orders them; kubectl
+    events is a newer alternative.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/
+
+- id: kcna-ad-020
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: >
+    Before applying an edited manifest you want to see exactly what would change in the
+    live object. Which command shows this?
+  options:
+    A: kubectl diff -f deployment.yaml
+    B: kubectl compare -f deployment.yaml
+    C: kubectl get -f deployment.yaml --changes
+    D: kubectl apply -f deployment.yaml --show
+  answer: A
+  explanation: >
+    kubectl diff shows the difference between the live object and what kubectl apply would
+    produce. kubectl apply --dry-run=server is another way to validate changes without
+    persisting them.
+  references:
+    - https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/

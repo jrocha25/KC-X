@@ -1,0 +1,49 @@
+/* Deliberately plain: readable, fast, no build step. */
+body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 0 16px; line-height: 1.5; color: #222; background: #fff; }
+header, footer { padding: 12px 0; border-bottom: 1px solid #ddd; }
+footer { border-top: 1px solid #ddd; border-bottom: none; margin-top: 32px; font-size: 0.85em; color: #666; }
+header a { color: inherit; text-decoration: none; }
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 4px 8px; border-bottom: 1px solid #eee; }
+.cert { margin-bottom: 32px; }
+.ok { color: #1a7f37; font-weight: bold; }
+.muted { color: #777; }
+
+/* Exam pages */
+.fail { color: #b42318; font-weight: bold; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+button { font: inherit; padding: 6px 14px; border: 1px solid #888; border-radius: 4px; background: #f4f4f4; cursor: pointer; }
+button:disabled { opacity: 0.5; cursor: default; }
+button.secondary { background: #fff; }
+button.danger { background: #b42318; color: #fff; border-color: #b42318; }
+.nav { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 16px 0; }
+.drill select { font: inherit; padding: 4px; max-width: 100%; }
+.drill [role="radiogroup"] label { margin-right: 8px; }
+.exam-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #eee; }
+.timer { margin: 0; }
+.timer .low { color: #b42318; }
+.question { font-size: 1.1em; font-weight: 500; }
+fieldset.options { border: none; padding: 0; margin: 0; }
+.option { display: block; padding: 8px 10px; margin: 6px 0; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; }
+.option:has(input:checked) { border-color: #1f6feb; background: #f0f6ff; }
+.slot { color: #777; }
+.flag { display: inline-block; margin-top: 8px; }
+.grid { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 16px; }
+.cell { display: inline-block; min-width: 2.2em; padding: 2px 4px; text-align: center; border: 1px solid #ccc; border-radius: 3px; background: #fff; font-size: 0.9em; }
+.cell.answered { background: #dbe9ff; border-color: #8fb4f0; }
+.cell.flagged { border-color: #d4a017; box-shadow: inset 0 -3px 0 #d4a017; }
+.cell.current { outline: 2px solid #222; }
+.legend .cell { margin: 0 2px 0 8px; }
+.jump a { display: inline-block; margin: 2px 4px; }
+.removed { color: #b42318; }
+
+/* Result page */
+.score { font-size: 1.8em; margin: 8px 0; }
+.result-q { border-top: 1px solid #eee; padding: 8px 0; }
+.result-q h2 { font-size: 1em; margin: 8px 0 4px; }
+ul.options { list-style: none; padding: 0; }
+ul.options li { padding: 4px 8px; margin: 3px 0; border-radius: 3px; }
+ul.options li.correct { background: #e6f4ea; }
+ul.options li.chosen-wrong { background: #fdecea; }
+.explanation { background: #f7f7f7; padding: 8px 10px; border-radius: 4px; }
+.refs { font-size: 0.9em; overflow-wrap: anywhere; }

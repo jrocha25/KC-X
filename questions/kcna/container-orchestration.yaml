@@ -1,0 +1,660 @@
+# KCNA — Container Orchestration (28%) — 34 questions
+# Topics: networking 10 · security 9 · troubleshooting 7 · storage 8
+# Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
+
+# ------------------------------------------------------------------- networking (10)
+
+- id: kcna-co-001
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: Which statement describes the Kubernetes networking model?
+  options:
+    A: "Pods on different nodes must go through NAT to reach each other"
+    B: "Every Pod gets its own IP and can reach all other Pods without NAT"
+    C: All Pods on a node share the node's IP address and are told apart by port
+    D: "Pods can only talk to other Pods in the same namespace by default"
+  answer: B
+  explanation: >
+    Kubernetes requires every Pod to have a unique cluster-wide IP and all Pods to be able
+    to reach each other directly without NAT. Containers inside one Pod share that IP and
+    communicate over localhost. A network plugin implements this model.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/
+
+- id: kcna-co-002
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: Calico, Cilium and Flannel are examples of plugins that implement which interface?
+  options:
+    A: Container Runtime Interface (CRI)
+    B: Container Storage Interface (CSI)
+    C: Container Network Interface (CNI)
+    D: Open Container Initiative (OCI) image spec
+  answer: C
+  explanation: >
+    The CNI specification defines how network plugins configure Pod network interfaces and
+    IP addresses. Kubernetes relies on a CNI plugin to implement the Pod network.
+  references:
+    - https://kubernetes.io/docs/concepts/extend-kubernetes/compute-storage-net/network-plugins/
+
+- id: kcna-co-003
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: If you create a Service without specifying spec.type, which type does it get?
+  options:
+    A: ClusterIP
+    B: NodePort
+    C: LoadBalancer
+    D: ExternalName
+  answer: A
+  explanation: >
+    ClusterIP is the default. It gives the Service a stable virtual IP that is reachable
+    only from inside the cluster and load-balances across the matching Pods.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+
+- id: kcna-co-004
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: What does a Service of type NodePort do?
+  options:
+    A: "Pins all of the Service's Pods to one node and exposes that node's IP"
+    B: "Asks the cloud provider to create an external load balancer with a public IP"
+    C: "Maps the Service to an external DNS name using a CNAME record"
+    D: "Opens a static port (30000–32767 by default) on every node for the Service"
+  answer: D
+  explanation: >
+    A NodePort Service allocates a port from the node port range and makes the Service
+    reachable at <any-node-IP>:<nodePort>. It also gets a ClusterIP. LoadBalancer
+    Services build on NodePort.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+
+- id: kcna-co-005
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: >
+    On a managed cloud cluster you want a Service to receive an external IP from the cloud
+    provider's load balancer. Which Service type should you use?
+  options:
+    A: ClusterIP
+    B: LoadBalancer
+    C: Headless
+    D: ExternalName
+  answer: B
+  explanation: >
+    type LoadBalancer asks the cloud provider integration (cloud-controller-manager or a
+    load balancer controller) to provision an external load balancer that forwards traffic
+    to the Service.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+
+- id: kcna-co-006
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: >
+    A Service named api lives in the namespace shop, and the cluster domain is
+    cluster.local. What is the fully qualified DNS name of the Service?
+  options:
+    A: shop.api.cluster.local
+    B: api.cluster.local
+    C: api.shop.svc.cluster.local
+    D: api.shop.pod.cluster.local
+  answer: C
+  explanation: >
+    Services get DNS records of the form <service>.<namespace>.svc.<cluster-domain>. From
+    within the same namespace the short name api also resolves.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+
+- id: kcna-co-007
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: What is the role of kube-proxy on each node?
+  options:
+    A: "It programs rules (iptables or nftables) that route Service IPs to Pods"
+    B: "It allocates an IP address to each new Pod from the node's Pod CIDR range"
+    C: "It proxies kubectl and client requests from users through to the kube-apiserver"
+    D: "It terminates TLS and routes HTTP traffic for Ingress resources"
+  answer: A
+  explanation: >
+    kube-proxy watches Services and EndpointSlices and maintains rules on each node that
+    implement Service virtual IPs. Pod IP allocation is the job of the CNI plugin; Ingress
+    TLS is handled by an ingress controller.
+  references:
+    - https://kubernetes.io/docs/reference/networking/virtual-ips/
+
+- id: kcna-co-008
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: >
+    You create an Ingress resource that routes /shop to one Service and /blog to another,
+    but nothing happens — no traffic is routed. What is the most likely missing piece?
+  options:
+    A: "A separate NodePort Service for each of the two paths"
+    B: A NetworkPolicy allowing ingress traffic
+    C: "An Ingress controller running in the cluster"
+    D: "A CNI plugin that supports HTTP-level routing"
+  answer: C
+  explanation: >
+    An Ingress object is only a set of HTTP routing rules. An Ingress controller must be
+    running to watch those objects and actually configure a proxy. Kubernetes does not
+    ship one by default.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/ingress/
+    - https://kubernetes.io/docs/concepts/services-networking/ingress-controllers/
+
+- id: kcna-co-009
+  domain: container-orchestration
+  topic: networking
+  difficulty: hard
+  question: >
+    Which statement about the Gateway API is accurate?
+  options:
+    A: "A service mesh API that replaces kube-proxy for all east-west Service traffic"
+    B: "A role-oriented API (GatewayClass, Gateway, HTTPRoute) designed to succeed Ingress"
+    C: "A CNCF project that replaces CoreDNS with gateway-based service discovery"
+    D: "An API the kubelet uses to pull container images through a registry gateway"
+  answer: B
+  explanation: >
+    The Gateway API is an official Kubernetes (SIG Network) API. It separates roles —
+    infrastructure providers define GatewayClasses, cluster operators define Gateways and
+    application developers attach Routes — and supports richer routing than Ingress.
+    The Kubernetes project now recommends Gateway over Ingress, whose API is frozen.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/gateway/
+    - https://kubernetes.io/docs/concepts/services-networking/ingress/
+    - https://gateway-api.sigs.k8s.io/
+
+- id: kcna-co-010
+  domain: container-orchestration
+  topic: networking
+  difficulty: hard
+  question: >
+    A Service is defined with clusterIP set to None. What does a DNS lookup of the Service
+    name return?
+  options:
+    A: "An NXDOMAIN error, because the Service has no cluster IP at all"
+    B: The IP of the node running kube-proxy
+    C: A single virtual IP chosen at random
+    D: The IP addresses of the ready Pods backing the Service
+  answer: D
+  explanation: >
+    clusterIP None creates a headless Service. No virtual IP is allocated and kube-proxy
+    does not handle it; DNS returns A/AAAA records for the backing Pods. StatefulSets use
+    headless Services to give each Pod a stable DNS name.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+
+# --------------------------------------------------------------------- security (9)
+
+- id: kcna-co-011
+  domain: container-orchestration
+  topic: security
+  difficulty: easy
+  question: >
+    In Kubernetes RBAC, which pair of objects grants a user permissions inside a single
+    namespace?
+  options:
+    A: Role and RoleBinding
+    B: ClusterRole and ClusterRoleBinding
+    C: ServiceAccount and Secret
+    D: NetworkPolicy and Namespace
+  answer: A
+  explanation: >
+    A Role defines a set of permissions within a namespace, and a RoleBinding grants that
+    Role to users, groups or ServiceAccounts in the same namespace.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+
+- id: kcna-co-012
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: Which statement about ClusterRoles is correct?
+  options:
+    A: "It can only be granted through a ClusterRoleBinding, never a RoleBinding"
+    B: "It can only grant read-only permissions such as get, list and watch on any resource"
+    C: "It can grant cluster-scoped access and be reused per namespace by a RoleBinding"
+    D: "It is reserved for control plane components and cannot be bound to users"
+  answer: C
+  explanation: >
+    ClusterRoles are not namespaced. They are needed for cluster-scoped resources and
+    non-resource URLs. A RoleBinding can reference a ClusterRole to grant its permissions
+    only within the RoleBinding's namespace.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/rbac/
+
+- id: kcna-co-013
+  domain: container-orchestration
+  topic: security
+  difficulty: easy
+  question: What provides an identity for processes running inside a Pod when they call the Kubernetes API?
+  options:
+    A: A User object
+    B: A ServiceAccount
+    C: A kubeconfig file baked into the image
+    D: The node's hostname
+  answer: B
+  explanation: >
+    ServiceAccounts are namespaced identities for workloads. Pods get a short-lived,
+    automatically rotated token for their ServiceAccount, which RBAC can grant permissions
+    to. Kubernetes has no User objects; users come from external authentication.
+  references:
+    - https://kubernetes.io/docs/concepts/security/service-accounts/
+
+- id: kcna-co-014
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: By default, how are the values of a Kubernetes Secret stored in etcd?
+  options:
+    A: "Encrypted with AES-256 using a per-node key that the kubelet manages and rotates"
+    B: "Hashed with SHA-256 so that the original values can never be read back"
+    C: "Stored in a separate built-in secure vault outside of etcd"
+    D: "Unencrypted unless encryption at rest is configured; base64 is merely an encoding"
+  answer: D
+  explanation: >
+    Secret data is base64-encoded in manifests, which is not encryption. Unless the API
+    server is configured with an EncryptionConfiguration (e.g. a KMS provider), Secrets
+    are stored unencrypted in etcd. Restricting RBAC access to Secrets matters too.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/secret/
+    - https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
+
+- id: kcna-co-015
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    You apply a NetworkPolicy to deny traffic to the database Pods, but connections are
+    still allowed. What is a likely reason?
+  options:
+    A: The cluster's network plugin does not enforce NetworkPolicy
+    B: NetworkPolicies only apply to Services, not Pods
+    C: NetworkPolicies only take effect after the node is rebooted
+    D: NetworkPolicies require a service mesh to work
+  answer: A
+  explanation: >
+    NetworkPolicy objects are enforced by the network plugin. If the CNI plugin in use
+    does not support them (for example basic Flannel), the objects are accepted by the API
+    server but have no effect.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/network-policies/
+
+- id: kcna-co-016
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: In a namespace where no NetworkPolicy selects a given Pod, what traffic is allowed to and from that Pod?
+  options:
+    A: Only traffic from Pods in the same namespace
+    B: No traffic at all until a policy is created
+    C: All ingress and egress traffic
+    D: Only traffic to and from the API server
+  answer: C
+  explanation: >
+    Pods are non-isolated by default and accept traffic from any source. A Pod becomes
+    isolated for ingress or egress only once a NetworkPolicy selecting it includes that
+    policy type. A common pattern is to add a default-deny policy per namespace.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/network-policies/
+
+- id: kcna-co-017
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: Which three policy levels are defined by the Pod Security Standards and enforced by Pod Security Admission?
+  options:
+    A: Low, Medium, High
+    B: Privileged, Baseline, Restricted
+    C: Open, Default, Locked
+    D: "Permissive, Enforcing, Restricted"
+  answer: B
+  explanation: >
+    Privileged is unrestricted, Baseline prevents known privilege escalations, and
+    Restricted follows current hardening best practices. Pod Security Admission applies a
+    level per namespace (via labels) in enforce, audit or warn mode. It replaced the removed
+    PodSecurityPolicy.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-standards/
+    - https://kubernetes.io/docs/concepts/security/pod-security-admission/
+
+- id: kcna-co-018
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    Which part of a Pod or container spec do you use to require that the container does
+    not run as root and has a read-only root filesystem?
+  options:
+    A: resources
+    B: env
+    C: volumeMounts
+    D: securityContext
+  answer: D
+  explanation: >
+    securityContext holds privilege and access-control settings such as runAsNonRoot,
+    runAsUser, readOnlyRootFilesystem, allowPrivilegeEscalation and capabilities.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+
+- id: kcna-co-019
+  domain: container-orchestration
+  topic: security
+  difficulty: hard
+  question: In which order does the kube-apiserver process an incoming request that creates an object?
+  options:
+    A: Authorization, authentication, admission control
+    B: Admission control, authentication, authorization
+    C: Authentication, authorization, admission control
+    D: Authentication, admission control, authorization
+  answer: C
+  explanation: >
+    The API server first authenticates the caller (who are you?), then authorizes the
+    action, for example via RBAC (are you allowed?), then runs admission controllers
+    (mutating, then validating), which can modify or reject the object before it is
+    persisted.
+  references:
+    - https://kubernetes.io/docs/concepts/security/controlling-access/
+
+# -------------------------------------------------------------- troubleshooting (7)
+
+- id: kcna-co-020
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    A Pod shows status CrashLoopBackOff. Which command is most useful for seeing why the
+    previous container instance exited?
+  options:
+    A: kubectl logs <pod> --previous
+    B: kubectl get nodes
+    C: kubectl top pod <pod>
+    D: kubectl rollout history deployment <name>
+  answer: A
+  explanation: >
+    CrashLoopBackOff means the container keeps exiting and the kubelet is backing off
+    restarts. kubectl logs --previous (-p) shows output from the last terminated instance;
+    kubectl describe pod shows the exit code and events.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/
+
+- id: kcna-co-021
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: easy
+  question: A Pod is stuck with the status ImagePullBackOff. Which is the most likely cause?
+  options:
+    A: "The node is out of memory and the kubelet is evicting Pods"
+    B: "The image name or tag is wrong, or registry credentials are missing"
+    C: "The liveness probe keeps failing and the container restarts"
+    D: "The Service selector does not match the labels set on the Pod template"
+  answer: B
+  explanation: >
+    ImagePullBackOff means the kubelet could not pull the image and is backing off retries.
+    Typical causes are typos in the image reference, a missing tag, or a private registry
+    without imagePullSecrets.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/images/
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/
+
+- id: kcna-co-022
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: easy
+  question: Which command shows a Pod's detailed state together with its recent events, such as scheduling failures?
+  options:
+    A: kubectl get pod <pod> -o name
+    B: kubectl logs <pod>
+    C: kubectl exec <pod> -- env
+    D: kubectl describe pod <pod>
+  answer: D
+  explanation: >
+    kubectl describe aggregates an object's spec, status, conditions and related events —
+    usually the first stop for Pending, image pull or probe problems. kubectl get events
+    lists events too.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/
+
+- id: kcna-co-023
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    A container keeps restarting and kubectl describe shows "Last State: Terminated,
+    Reason: OOMKilled, Exit Code: 137". What happened?
+  options:
+    A: "The container image is corrupted and the entrypoint cannot start"
+    B: "The liveness probe timed out and the kubelet killed the container"
+    C: "It exceeded its memory limit and was killed by the OOM killer"
+    D: "The node ran out of disk space for the container's writable layer"
+  answer: C
+  explanation: >
+    OOMKilled means the container used more memory than its limit (or the node was under
+    memory pressure). Exit code 137 is 128 + 9 (SIGKILL). Raise the limit or fix the
+    application's memory usage.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/assign-memory-resource/
+
+- id: kcna-co-024
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    Requests to a Service time out. kubectl get endpointslices shows no endpoints for it,
+    although the Pods are Running and Ready. What should you check first?
+  options:
+    A: Whether the Service's selector matches the Pods' labels
+    B: "Whether the nodes have enough free disk space for the Pods"
+    C: Whether the container image uses the latest tag
+    D: Whether etcd is running in the Pods' namespace
+  answer: A
+  explanation: >
+    A Service only gets endpoints for ready Pods whose labels match its selector. A typo in
+    the selector or labels is one of the most common reasons for an empty endpoint list.
+    Also check that targetPort matches the container port.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-service/
+
+- id: kcna-co-025
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    kubectl get nodes shows one worker as NotReady. Which component on that node should
+    you investigate first?
+  options:
+    A: "The kube-scheduler on the control plane"
+    B: "The kubelet service running on that node"
+    C: "The etcd member storing that node's object"
+    D: "The Ingress controller handling the node's traffic"
+  answer: B
+  explanation: >
+    A node's Ready condition is reported by its kubelet. If the kubelet is stopped,
+    misconfigured, cannot reach the API server, or the container runtime or CNI plugin is
+    broken, the node goes NotReady.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-cluster/
+
+- id: kcna-co-026
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: hard
+  question: >
+    A Pod's readiness probe starts failing while its liveness probe keeps passing. What
+    does Kubernetes do?
+  options:
+    A: "Restarts the container immediately to recover the probe"
+    B: Deletes the Pod and lets the ReplicaSet create a new one
+    C: "Evicts the Pod so the scheduler can move it to a healthier node"
+    D: "Stops sending it Service traffic but does not restart it"
+  answer: D
+  explanation: >
+    Readiness controls whether a Pod receives traffic; liveness controls restarts. A failed
+    readiness probe takes the Pod out of load balancing until it passes again. Only a
+    failing liveness (or startup) probe causes the kubelet to restart the container.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+
+# ----------------------------------------------------------------------- storage (8)
+
+- id: kcna-co-027
+  domain: container-orchestration
+  topic: storage
+  difficulty: easy
+  question: What happens to the data in an emptyDir volume when its Pod is deleted?
+  options:
+    A: It is deleted permanently
+    B: It is moved to a PersistentVolume
+    C: It is kept on the node until the node reboots
+    D: It is copied to the replacement Pod
+  answer: A
+  explanation: >
+    An emptyDir is created when a Pod is assigned to a node and exists as long as that Pod
+    runs there. It survives container restarts but is deleted when the Pod is removed.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/volumes/
+
+- id: kcna-co-028
+  domain: container-orchestration
+  topic: storage
+  difficulty: easy
+  question: What is a PersistentVolumeClaim (PVC)?
+  options:
+    A: "A piece of storage in the cluster that an administrator provisioned"
+    B: "A user's request for storage that is then bound to a PersistentVolume"
+    C: "A point-in-time backup copy of a PersistentVolume"
+    D: A plugin that connects Kubernetes to a storage vendor
+  answer: B
+  explanation: >
+    A PersistentVolume (PV) is a piece of storage in the cluster; a PVC is a user's request
+    for storage of a given size and access mode. Pods reference PVCs, which are bound to
+    PVs.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+
+- id: kcna-co-029
+  domain: container-orchestration
+  topic: storage
+  difficulty: medium
+  question: Which object enables dynamic provisioning, so PersistentVolumes are created automatically when a PVC asks for them?
+  options:
+    A: VolumeSnapshot
+    B: LimitRange
+    C: StorageClass
+    D: ConfigMap
+  answer: C
+  explanation: >
+    A StorageClass names a provisioner (usually a CSI driver) and its parameters. When a
+    PVC references a StorageClass (or the default one), the provisioner creates a matching
+    PV on demand.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/storage-classes/
+    - https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/
+
+- id: kcna-co-030
+  domain: container-orchestration
+  topic: storage
+  difficulty: medium
+  question: What does the ReadWriteOnce access mode on a PersistentVolume mean?
+  options:
+    A: The volume can be written only once and is read-only afterwards
+    B: The volume can be mounted read-write by many nodes
+    C: The volume can be mounted read-write by a single node
+    D: The volume can be mounted by a single Pod, read-only
+  answer: C
+  explanation: >
+    ReadWriteOnce (RWO) allows read-write mounting by a single node; several Pods on that
+    node can still use it. ReadWriteMany (RWX) allows many nodes, and ReadWriteOncePod
+    (RWOP) restricts it to a single Pod.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+
+- id: kcna-co-031
+  domain: container-orchestration
+  topic: storage
+  difficulty: easy
+  question: Which standard lets storage vendors write a single plugin that works with Kubernetes and other container orchestrators?
+  options:
+    A: Container Network Interface (CNI)
+    B: Container Runtime Interface (CRI)
+    C: Service Mesh Interface (SMI)
+    D: Container Storage Interface (CSI)
+  answer: D
+  explanation: >
+    CSI is a standard for exposing block and file storage to containerized workloads.
+    Vendors ship CSI drivers out of tree instead of adding code to Kubernetes itself.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/volumes/
+    - https://github.com/container-storage-interface/spec
+
+- id: kcna-co-032
+  domain: container-orchestration
+  topic: storage
+  difficulty: hard
+  question: >
+    A PersistentVolume was dynamically provisioned from a StorageClass that does not set
+    reclaimPolicy. What happens to the volume when its PVC is deleted?
+  options:
+    A: The PV and its underlying storage are deleted
+    B: The PV is retained and must be cleaned up manually
+    C: The PV is recycled with rm -rf and made available again
+    D: The PV is bound to the next PVC that requests the same size
+  answer: A
+  explanation: >
+    Dynamically provisioned PVs inherit the StorageClass reclaim policy, which defaults to
+    Delete. Set reclaimPolicy Retain on the StorageClass (or patch the PV) to keep the data.
+    The Recycle policy is deprecated.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+    - https://kubernetes.io/docs/concepts/storage/storage-classes/
+
+- id: kcna-co-033
+  domain: container-orchestration
+  topic: storage
+  difficulty: easy
+  question: >
+    You want to provide an nginx.conf file to a container without rebuilding its image.
+    Which object is designed for non-confidential configuration like this?
+  options:
+    A: Secret
+    B: ConfigMap
+    C: PersistentVolume
+    D: CustomResourceDefinition
+  answer: B
+  explanation: >
+    A ConfigMap stores non-confidential key/value configuration and can be consumed as
+    environment variables or mounted as files in a volume. Use a Secret for confidential
+    data.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/configmap/
+
+- id: kcna-co-034
+  domain: container-orchestration
+  topic: storage
+  difficulty: medium
+  question: >
+    A PVC that does not set storageClassName stays Pending, and no PV is ever created. The
+    cluster has a CSI driver installed. What is a likely cause?
+  options:
+    A: "The PVC was created in a namespace the CSI driver does not watch"
+    B: "The node does not have enough free memory to mount the volume"
+    C: "No StorageClass is marked as default and no existing PV matches the claim"
+    D: "PVCs can only be bound when they are created by a StatefulSet"
+  answer: C
+  explanation: >
+    A PVC without storageClassName uses the default StorageClass, if one exists. With no
+    default class, the claim can only bind to a pre-provisioned PV that matches its size
+    and access mode; otherwise it stays Pending.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+    - https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/
