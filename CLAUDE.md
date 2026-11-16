@@ -15,7 +15,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 The image copies code, questions and tests at build time (no bind mount), so pass `--build` after any edit or you will test stale files.
 
-- Run app: `docker compose up --build` → http://localhost:8080 (`docker compose down -v` wipes attempt history)
+- Run app: `./kcx.sh start|stop|restart|status|logs|reset` (detached, rebuilds on start; `reset` wipes attempt history)
+  or `docker compose up --build` → http://localhost:8080 (`docker compose down -v` wipes attempt history)
 - Validate questions: `docker compose run --rm --build kcx python scripts/validate_questions.py [questions/kcna]`
 - Tests: `docker compose run --rm --build kcx pytest` (single test: append `tests/test_bank.py::test_bank_matches_blueprint`)
 - Link check (network): `docker compose run --rm kcx python scripts/check_links.py [questions/kcsa]`

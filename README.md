@@ -22,20 +22,24 @@ Requires Docker with Compose.
 
 ```bash
 git clone <this repo> kc-x && cd kc-x
-docker compose up --build
+./kcx.sh start
 ```
 
-Then open <http://localhost:8080>.
+Then open <http://localhost:8080>. The server runs in the background; `./kcx.sh stop` stops it.
+(Plain `docker compose up --build` works too if you prefer it.)
 
 | Task | Command |
 |---|---|
-| Stop | `docker compose down` (your history is kept in the `kcx-data` volume) |
-| Wipe history | `docker compose down -v` |
+| Stop | `./kcx.sh stop` (your history is kept in the `kcx-data` volume) |
+| Restart after edits (rebuilds) | `./kcx.sh restart` |
+| Is it running? | `./kcx.sh status` |
+| Follow server logs | `./kcx.sh logs` |
+| Wipe history | `./kcx.sh reset` (asks first) |
 | Validate questions | `docker compose run --rm kcx python scripts/validate_questions.py` |
 | Run tests | `docker compose run --rm kcx pytest` |
 | Check reference links | `docker compose run --rm kcx python scripts/check_links.py` |
 
-After editing questions or code, run `docker compose up --build` again.
+After editing questions or code, run `./kcx.sh restart` so the image is rebuilt.
 
 ## Exam coverage
 
@@ -55,6 +59,7 @@ kcx/            Flask app (bank loader, exam engine, routes, templates)
 scripts/        validate_questions.py, check_links.py
 tests/          pytest suite
 docs/           roadmap, architecture, question format, blueprints
+kcx.sh          start/stop helper (wraps docker compose)
 .github/        CI workflow
 ```
 

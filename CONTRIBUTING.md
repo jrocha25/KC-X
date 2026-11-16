@@ -42,5 +42,5 @@ Open an issue that includes:
 
 - [ ] `scripts/validate_questions.py` prints `OK`
 - [ ] `pytest` passes
-- [ ] `docker compose up --build` starts and the home page loads
+- [ ] `./kcx.sh start` (or `docker compose up --build`) starts and the home page loads
 - [ ] Docs updated if behaviour or formats changed
