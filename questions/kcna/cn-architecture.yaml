@@ -1,8 +1,8 @@
-# KCNA — Cloud Native Architecture (12%) — 21 questions
-# Topics: observability 9 · ecosystem-principles 8 · community-collaboration 4
+# KCNA — Cloud Native Architecture (12%) — 28 questions
+# Topics: observability 12 · ecosystem-principles 11 · community-collaboration 5
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# ---------------------------------------------------------------- observability (9)
+# ---------------------------------------------------------------- observability (12)
 
 - id: kcna-ca-001
   domain: cn-architecture
@@ -188,7 +188,68 @@
   references:
     - https://kubernetes.io/docs/concepts/cluster-administration/logging/
 
-# --------------------------------------------------------- ecosystem-principles (8)
+- id: kcna-ca-022
+  domain: cn-architecture
+  topic: observability
+  difficulty: easy
+  question: What is the main role of the OpenTelemetry Collector?
+  options:
+    A: "A time-series database that stores metrics for long periods"
+    B: "A dashboard tool for building graphs and alert panels"
+    C: "A vendor-agnostic agent that receives, processes and exports telemetry"
+    D: "A language SDK that adds tracing code to applications for you"
+  answer: C
+  explanation: >
+    The Collector is a vendor-agnostic proxy that receives telemetry (traces, metrics,
+    logs) in many formats, processes it (batching, filtering, enriching) and exports it to
+    one or more backends. You can switch backends without changing application code.
+    Storage and dashboards are backend jobs, and SDKs live inside the application.
+  references:
+    - https://opentelemetry.io/docs/collector/
+
+- id: kcna-ca-023
+  domain: cn-architecture
+  topic: observability
+  difficulty: easy
+  question: >
+    In the Prometheus ecosystem, which component deduplicates, groups and routes the alerts
+    that Prometheus fires to receivers such as email or chat?
+  options:
+    A: Pushgateway
+    B: Grafana
+    C: node_exporter
+    D: Alertmanager
+  answer: D
+  explanation: >
+    Prometheus evaluates alerting rules and sends the firing alerts to Alertmanager, which
+    deduplicates, groups and routes them to receivers and handles silencing and
+    inhibition. Pushgateway accepts metrics from short-lived jobs, Grafana draws
+    dashboards, and node_exporter exposes host metrics.
+  references:
+    - https://prometheus.io/docs/alerting/latest/alertmanager/
+
+- id: kcna-ca-024
+  domain: cn-architecture
+  topic: observability
+  difficulty: medium
+  question: >
+    You want Prometheus metrics about object state, such as how many replicas of each
+    Deployment are available or which Pods are not ready. Which add-on exposes these?
+  options:
+    A: kube-state-metrics
+    B: metrics-server
+    C: cAdvisor
+    D: node_exporter
+  answer: A
+  explanation: >
+    kube-state-metrics watches the API server and exposes metrics generated from the state
+    of objects - phases, conditions, replica counts, labels. metrics-server gives current
+    CPU and memory usage for kubectl top and autoscaling, while cAdvisor and node_exporter
+    report container and host resource usage.
+  references:
+    - https://kubernetes.io/docs/concepts/cluster-administration/kube-state-metrics/
+
+# --------------------------------------------------------- ecosystem-principles (11)
 
 - id: kcna-ca-007
   domain: cn-architecture
@@ -347,7 +408,72 @@
   references:
     - https://kubernetes.io/docs/concepts/cluster-administration/node-autoscaling/
 
-# ---------------------------------------------------- community-collaboration (4)
+- id: kcna-ca-025
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: easy
+  question: >
+    Which CNCF graduated project detects threats at runtime by watching Linux system calls
+    against rules, such as a shell being started inside a container?
+  options:
+    A: Kubescape
+    B: Open Policy Agent
+    C: Falco
+    D: Jaeger
+  answer: C
+  explanation: >
+    Falco parses Linux syscalls at runtime and checks them against YAML rules, raising
+    alerts for behaviour such as a shell starting in a container or an unexpected write to
+    a sensitive file. Kubescape checks configuration posture rather than live behaviour,
+    OPA evaluates policies (for example at admission), and Jaeger does tracing.
+  references:
+    - https://falco.org/docs/
+
+- id: kcna-ca-026
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: medium
+  question: >
+    A team wants to find risky configuration before and after deployment, and also catch
+    suspicious behaviour in running containers. Which pairing covers both?
+  options:
+    A: "Falco for configuration scanning and Kubescape for runtime alerts"
+    B: "Kubescape for posture scanning and Falco for runtime detection"
+    C: "Prometheus for configuration scanning and Jaeger for runtime alerts"
+    D: "Helm for configuration scanning and Linkerd for runtime detection"
+  answer: B
+  explanation: >
+    Kubescape scans clusters and manifests against frameworks such as NSA-CISA and CIS to
+    find misconfiguration (posture). Falco watches live syscall activity and alerts on
+    suspicious behaviour (runtime). The first option swaps their roles, and the others
+    pair observability, packaging or mesh tools with security jobs they don't do.
+  references:
+    - https://github.com/kubescape/kubescape
+    - https://falco.org/docs/
+
+- id: kcna-ca-027
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: medium
+  question: >
+    The Kubernetes documentation, following the CNCF cloud native security white paper,
+    groups security controls by lifecycle phase. Which phases are these?
+  options:
+    A: "Plan, Code, Test and Release"
+    B: "Cloud, Cluster, Container and Code"
+    C: "Identify, Protect, Detect and Respond"
+    D: "Develop, Distribute, Deploy and Runtime"
+  answer: D
+  explanation: >
+    The CNCF white paper and the Kubernetes "Cloud native security and Kubernetes" page
+    organise controls by lifecycle phase - Develop, Distribute, Deploy and Runtime.
+    Cloud/Cluster/Container/Code is the older 4C layering model (outermost layer first),
+    Identify/Protect/Detect/Respond comes from the NIST Cybersecurity Framework, and
+    Plan/Code/Test/Release are DevOps stages.
+  references:
+    - https://kubernetes.io/docs/concepts/security/cloud-native-security/
+
+# ---------------------------------------------------- community-collaboration (5)
 
 - id: kcna-ca-012
   domain: cn-architecture
@@ -421,3 +547,23 @@
     Committee governs only the Kubernetes project.
   references:
     - https://github.com/cncf/toc
+
+- id: kcna-ca-028
+  domain: cn-architecture
+  topic: community-collaboration
+  difficulty: easy
+  question: For roughly how long does each Kubernetes minor release (1.19 and newer) receive patch releases?
+  options:
+    A: "About 3 months"
+    B: "About 6 months"
+    C: "About 1 year"
+    D: "About 3 years"
+  answer: C
+  explanation: >
+    The project maintains release branches for the three most recent minor releases, and
+    Kubernetes 1.19 and newer get about one year of patch support (1.18 and older got about
+    nine months). This is a support window for patches, not an API compatibility promise.
+    API removals follow the separate deprecation policy.
+  references:
+    - https://kubernetes.io/releases/
+    - https://kubernetes.io/releases/patch-releases/#support-period

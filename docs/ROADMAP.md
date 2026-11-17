@@ -100,6 +100,7 @@ Design details live in [ARCHITECTURE.md](ARCHITECTURE.md). Question rules are in
 - [x] Route tests with the Flask test client, covering the whole exam flow (`tests/test_routes.py`)
 - [x] A CI job that checks reference URLs, allowed to fail without blocking (`scripts/check_links.py`)
 - [x] Grow the KCNA bank to 180 questions, three times the per-exam split: 78/51/30/21
+- [x] Grow the KCNA bank to 240 questions, four times the per-exam split: 104/68/40/28
 - [ ] README screenshots
 - [ ] Tag `v1.0.0`
 

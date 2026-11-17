@@ -1,8 +1,8 @@
-# KCNA — Kubernetes Fundamentals (44%) — 78 questions
-# Topics: core-concepts 27 · administration 17 · scheduling 16 · containerization 18
+# KCNA — Kubernetes Fundamentals (44%) — 104 questions
+# Topics: core-concepts 36 · administration 23 · scheduling 21 · containerization 24
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# ---------------------------------------------------------------- core-concepts (27)
+# ---------------------------------------------------------------- core-concepts (36)
 
 - id: kcna-kf-001
   domain: k8s-fundamentals
@@ -520,7 +520,187 @@
   references:
     - https://kubernetes.io/docs/concepts/workloads/controllers/job/
 
-# --------------------------------------------------------------- administration (17)
+- id: kcna-kf-079
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: >
+    A new worker machine joins the cluster. Which component running on that machine
+    registers it as a Node with the API server by default?
+  options:
+    A: kube-proxy
+    B: containerd
+    C: kubelet
+    D: kube-controller-manager
+  answer: C
+  explanation: >
+    With --register-node set to true (the default), the kubelet registers its own Node
+    object with the API server and then keeps its status up to date. kube-proxy only
+    programs Service networking rules, containerd runs containers, and
+    kube-controller-manager runs in the control plane, not on the joining machine.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/nodes/
+
+- id: kcna-kf-080
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    kube-scheduler has just bound a new Pod to the node worker-2. Which component then
+    notices the assignment and has the Pod's containers started on worker-2?
+  options:
+    A: "kube-scheduler, which starts the containers right after binding"
+    B: "The kubelet on worker-2, through the container runtime"
+    C: "kube-controller-manager, through the ReplicaSet controller"
+    D: "kube-proxy on worker-2, which also sets up the Pod network"
+  answer: B
+  explanation: >
+    The scheduler only decides where a Pod runs and records that choice in the API. The
+    kubelet on the chosen node watches for Pods bound to it and asks the container runtime
+    (through the CRI) to start their containers, then reports their status. Controllers
+    create Pods but don't run them, and kube-proxy handles Service traffic.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/components/
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/
+
+- id: kcna-kf-081
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: Which list orders these Kubernetes building blocks from the broadest to the narrowest?
+  options:
+    A: "Cluster, Pod, Node, Container"
+    B: "Node, Cluster, Pod, Container"
+    C: "Cluster, Node, Container, Pod"
+    D: "Cluster, Node, Pod, Container"
+  answer: D
+  explanation: >
+    A cluster is a set of nodes. Each node runs Pods, and each Pod wraps one or more
+    containers. A Pod never spans nodes, and a container always runs inside a Pod, so the
+    Pod sits between the node and the container.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/components/
+    - https://kubernetes.io/docs/concepts/workloads/pods/
+
+- id: kcna-kf-082
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: A Pod defines three containers. Where do these containers run?
+  options:
+    A: "Together on the same node, sharing the Pod's network namespace"
+    B: "On up to three different nodes, chosen by the scheduler to balance load"
+    C: "On separate nodes, linked by an overlay so they share one IP"
+    D: "On the same node only if the Pod sets a node affinity rule"
+  answer: A
+  explanation: >
+    The containers of a Pod are always co-located and co-scheduled on one node, and they
+    share the Pod's network namespace (one IP address) and its volumes. To spread work
+    across nodes you run several Pods, not several containers in one Pod.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/
+
+- id: kcna-kf-083
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: Which two kinds of heartbeat does Kubernetes use to decide whether a node is still available?
+  options:
+    A: "ICMP pings from the API server and periodic writes to etcd"
+    B: "Events in the default namespace and ConfigMap updates"
+    C: "Updates to the Node's status and to its Lease in kube-node-lease"
+    D: "gRPC calls from the kubelet to both kube-scheduler and kube-proxy"
+  answer: C
+  explanation: >
+    Nodes send two forms of heartbeat - updates to the .status of their Node object, and
+    renewals of a Lease object in the kube-node-lease namespace (each Node has one).
+    Leases are small, cheap updates that let the control plane notice a failed node
+    quickly without rewriting the whole Node status.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/nodes/#node-heartbeats
+    - https://kubernetes.io/docs/concepts/architecture/leases/
+
+- id: kcna-kf-084
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    A node suddenly stops sending heartbeats. Which component sets its Ready condition to
+    Unknown and, if it stays unreachable, starts evicting its Pods?
+  options:
+    A: "The kubelet on that node, before it shuts down"
+    B: "kube-scheduler, as part of its filtering step"
+    C: "etcd, when the node's Lease object expires"
+    D: "The node controller in kube-controller-manager"
+  answer: D
+  explanation: >
+    The node controller monitors node health. When a node becomes unreachable it sets the
+    Ready condition to Unknown, taints the node, and after a grace period (5 minutes by
+    default) triggers API-initiated eviction of its Pods. The unreachable kubelet can't
+    report anything, the scheduler only places new Pods, and etcd is just storage.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/nodes/#node-controller
+
+- id: kcna-kf-085
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: What does the kubelet mainly work from to decide which containers should be running on its node?
+  options:
+    A: "PodSpecs of Pods bound to its node, mostly via the API server"
+    B: "The Deployment objects of every namespace across the whole cluster"
+    C: "The list of images already cached on the node's disk"
+    D: "The scheduler's queue of Pods that are still Pending"
+  answer: A
+  explanation: >
+    The kubelet works in terms of PodSpecs. It receives the specs of the Pods assigned to
+    its node (mainly from the API server, plus static Pod manifests) and makes sure the
+    containers they describe are running and healthy. It doesn't read Deployments, which
+    controllers handle, or the scheduler's queue.
+  references:
+    - https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet/
+    - https://kubernetes.io/docs/concepts/overview/components/
+
+- id: kcna-kf-086
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: >
+    Which control plane component links the cluster to a cloud provider's API, for
+    example to create load balancers or remove Nodes whose VMs were deleted?
+  options:
+    A: kube-controller-manager
+    B: cloud-controller-manager
+    C: kube-apiserver
+    D: kube-proxy
+  answer: B
+  explanation: >
+    The cloud-controller-manager embeds cloud-specific control logic. Its node controller
+    removes Node objects whose servers were deleted in the cloud, its route controller
+    configures routes, and its service controller sets up load balancers. This lets cloud
+    providers release features at their own pace, separate from kube-controller-manager.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/cloud-controller/
+
+- id: kcna-kf-087
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: Which of these is a control plane component rather than a node component?
+  options:
+    A: kubelet
+    B: kube-proxy
+    C: container runtime
+    D: kube-scheduler
+  answer: D
+  explanation: >
+    kube-scheduler runs in the control plane and assigns Pods to nodes. The kubelet, the
+    container runtime and kube-proxy (or a network plugin that replaces it) run on every
+    node to start containers and route Service traffic.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/components/
+
+# --------------------------------------------------------------- administration (23)
 
 - id: kcna-kf-019
   domain: k8s-fundamentals
@@ -846,7 +1026,134 @@
     - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
     - https://kubernetes.io/releases/version-skew-policy/
 
-# ------------------------------------------------------------------- scheduling (16)
+- id: kcna-kf-088
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: >
+    Which Kubernetes API level is well tested, but may still change its schema in
+    incompatible ways in a later version, with migration instructions provided?
+  options:
+    A: Alpha
+    B: Beta
+    C: Stable (GA)
+    D: Deprecated
+  answer: B
+  explanation: >
+    Beta APIs (for example v2beta3) are well tested and support for the feature won't be
+    dropped, but object schemas or semantics may still change incompatibly in a later beta
+    or stable version. Alpha APIs may change or vanish without notice. Stable (GA) APIs
+    stay available in all future releases of the major version. Deprecated is a status,
+    not a stability level.
+  references:
+    - https://kubernetes.io/docs/reference/using-api/#api-versioning
+
+- id: kcna-kf-089
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which apiVersion belongs to an alpha-level API?
+  options:
+    A: autoscaling/v2
+    B: flowcontrol.apiserver.k8s.io/v1beta3
+    C: resource.k8s.io/v1alpha3
+    D: networking.k8s.io/v1
+  answer: C
+  explanation: >
+    The version part of apiVersion tells you the stability level - names containing alpha
+    (v1alpha3) are alpha, names containing beta (v1beta1) are beta, and a plain vX (v1,
+    v2) is stable. Built-in alpha versions are disabled by default and must be enabled in
+    the kube-apiserver configuration.
+  references:
+    - https://kubernetes.io/docs/reference/using-api/#api-versioning
+
+- id: kcna-kf-090
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: hard
+  question: >
+    Under the Kubernetes deprecation policy, how long must a built-in beta API version
+    keep being served after it is deprecated?
+  options:
+    A: "9 months or 3 minor releases, whichever is longer"
+    B: "Exactly 12 months, counted from the release that added it"
+    C: "Until the next major Kubernetes version, such as 2.0"
+    D: "Only until the next minor release, with no time minimum"
+  answer: A
+  explanation: >
+    Beta API versions are no longer served 9 months or 3 minor releases (whichever is
+    longer) after deprecation, giving users time to migrate. No rule promises "one year of
+    API compatibility" - the 12-month figure people quote is the approximate patch-support
+    window of a minor release. Keeping an API until the next major version is the rule for
+    GA versions, and alpha versions can be removed in any release.
+  references:
+    - https://kubernetes.io/docs/reference/using-api/deprecation-policy/
+
+- id: kcna-kf-091
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: >
+    What does the Kubernetes deprecation policy say about removing a stable (GA) API
+    version such as apps/v1?
+  options:
+    A: "It is removed 12 months after it is marked as deprecated"
+    B: "It follows the beta rule of 3 minor releases after deprecation"
+    C: "It can be removed in any release once a newer version exists"
+    D: "It may be deprecated, but NOT removed within a major version"
+  answer: D
+  explanation: >
+    GA API versions may be marked deprecated, but they must not be removed within a major
+    version of Kubernetes, and there are no plans for a major version that removes stable
+    APIs. Fixed removal windows apply to beta versions, and alpha versions can be dropped
+    at any time.
+  references:
+    - https://kubernetes.io/docs/reference/using-api/deprecation-policy/
+
+- id: kcna-kf-092
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: >
+    Which command changes the image of the container named nginx in the Deployment web to
+    nginx:1.27, without recreating the Deployment?
+  options:
+    A: "kubectl edit pod web nginx=nginx:1.27"
+    B: "kubectl update image deployment/web nginx:1.27"
+    C: "kubectl set image deployment/web nginx=nginx:1.27"
+    D: "kubectl rollout restart deployment/web nginx:1.27"
+  answer: C
+  explanation: >
+    kubectl set image updates container images on an existing resource using
+    CONTAINER_NAME=IMAGE pairs, and for a Deployment this starts a rolling update. kubectl
+    has no update command, rollout restart restarts Pods but doesn't take an image, and
+    web is a Deployment, not a Pod.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_set/kubectl_set_image/
+
+- id: kcna-kf-093
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    You want to change a container image in a Deployment with kubectl patch. At which
+    path in the Deployment object is the list of containers defined?
+  options:
+    A: ".spec.containers"
+    B: ".spec.template.spec.containers"
+    C: ".spec.template.containers"
+    D: ".spec.selector.template.containers"
+  answer: B
+  explanation: >
+    A Deployment's .spec.template is a Pod template, and a Pod template has its own spec,
+    so the containers live at .spec.template.spec.containers. A patch aimed at
+    .spec.containers changes nothing useful, because Deployments have no such field.
+    kubectl set image avoids getting this path wrong.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+    - https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates
+
+# ------------------------------------------------------------------- scheduling (21)
 
 - id: kcna-kf-030
   domain: k8s-fundamentals
@@ -1161,7 +1468,109 @@
   references:
     - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
 
-# -------------------------------------------------------------- containerization (18)
+- id: kcna-kf-094
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    A container sets a memory limit of 256Mi. What actually enforces that limit while the
+    container runs on a Linux node?
+  options:
+    A: "kube-scheduler, which checks container usage every few seconds"
+    B: "The ResourceQuota controller in kube-controller-manager"
+    C: "kube-apiserver, which rejects writes once the limit is reached"
+    D: "The kernel's cgroups, set up by the kubelet and runtime"
+  answer: D
+  explanation: >
+    The kubelet passes requests and limits to the container runtime, which configures
+    Linux cgroups. The kernel then enforces them - CPU by throttling, memory with OOM
+    kills. The scheduler only uses requests for placement, and ResourceQuota caps totals
+    per namespace at admission time.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+- id: kcna-kf-095
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: easy
+  question: A container repeatedly tries to use more CPU than its CPU limit. What happens?
+  options:
+    A: "It is throttled, so it keeps running but gets no more CPU"
+    B: "It is OOMKilled by the kernel and restarted by the kubelet"
+    C: "It is evicted at once and rescheduled onto a larger node"
+    D: "Its limit is raised automatically to match the demand"
+  answer: A
+  explanation: >
+    A CPU limit is a hard ceiling enforced by CPU throttling - the container is slowed
+    down, not killed. Exceeding a memory limit is different and can lead to an OOM kill.
+    Kubernetes never raises a limit by itself.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+- id: kcna-kf-096
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: hard
+  question: >
+    A container requests 128Mi of memory and has a 512Mi limit. It now uses 300Mi on a
+    node with plenty of free memory. What happens?
+  options:
+    A: "It is OOMKilled because it used more memory than it requested"
+    B: "It is throttled back down to 128Mi by the kubelet"
+    C: "Nothing - it may use more than its request, up to the limit"
+    D: "It is evicted because its QoS class is now Guaranteed"
+  answer: C
+  explanation: >
+    A request is what the scheduler reserves, not a cap. If the node has spare resources,
+    a container may use more than its request, up to its limit. Memory can't be throttled,
+    and a Pod with request lower than limit is Burstable, not Guaranteed.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+- id: kcna-kf-097
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: hard
+  question: >
+    Monitoring shows a node at only 20% real CPU use, yet a new Pod with a CPU request
+    stays Pending with "Insufficient cpu" for that node. What is the most likely reason?
+  options:
+    A: "Monitoring data lags, so the scheduler waits for the next sample"
+    B: "The CPU requests of Pods already on the node fill its allocatable CPU"
+    C: "The Pod's CPU limit is higher than the node's total CPU capacity"
+    D: "kube-proxy reserves the node's idle CPU for Service traffic"
+  answer: B
+  explanation: >
+    kube-scheduler compares the sum of the requests of Pods already placed on a node with
+    the node's allocatable capacity, not with live usage. If existing Pods requested most
+    of the CPU but use little, the node still counts as full for new requests. Lowering
+    oversized requests or adding nodes fixes it.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/
+
+- id: kcna-kf-098
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    A Pod sets spec.schedulerName to my-scheduler, but no scheduler with that name is
+    running in the cluster. What happens to the Pod?
+  options:
+    A: "It stays Pending until a scheduler with that name starts"
+    B: "The default scheduler picks it up after a short timeout"
+    C: "The API server rejects it because the scheduler is unknown"
+    D: "The kubelet on a random node starts it with no scheduling"
+  answer: A
+  explanation: >
+    Each scheduler only handles Pods whose spec.schedulerName matches one of its profiles.
+    Pods without the field use default-scheduler. A Pod naming a scheduler that isn't
+    running is never picked up by the default scheduler and stays Pending until that
+    scheduler runs.
+  references:
+    - https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/
+
+# -------------------------------------------------------------- containerization (24)
 
 - id: kcna-kf-041
   domain: k8s-fundamentals
@@ -1507,3 +1916,124 @@
     talks to the API server, kubeadm bootstraps clusters, and etcdctl manages etcd.
   references:
     - https://kubernetes.io/docs/tasks/debug/debug-cluster/crictl/
+
+- id: kcna-kf-099
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Which project is the reference implementation of the OCI Runtime Specification?
+  options:
+    A: runc
+    B: CRI-O
+    C: containerd
+    D: crun
+  answer: A
+  explanation: >
+    runc, donated by Docker to the OCI, is the reference implementation of the OCI runtime
+    spec. It's a low-level CLI that spawns and runs containers. crun is another OCI
+    runtime written in C, but not the reference one. containerd and CRI-O are high-level
+    runtimes that implement the Kubernetes CRI and call a low-level OCI runtime such as
+    runc.
+  references:
+    - https://github.com/opencontainers/runtime-spec/blob/main/implementations.md
+    - https://github.com/opencontainers/runc
+
+- id: kcna-kf-100
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Which three specifications does the Open Container Initiative (OCI) maintain?
+  options:
+    A: "Runtime, Network and Storage"
+    B: "Image, Build and Registry Auth"
+    C: "Runtime, Scheduling and Logging"
+    D: "Runtime, Image and Distribution"
+  answer: D
+  explanation: >
+    The OCI maintains the Runtime Specification (how to run a filesystem bundle), the
+    Image Specification (image format) and the Distribution Specification (how registries
+    serve content). Networking is covered by CNI and storage by CSI, which are not OCI
+    specs.
+  references:
+    - https://opencontainers.org/about/overview/
+
+- id: kcna-kf-101
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: How do CRI-O and runc work together on a Kubernetes node?
+  options:
+    A: "runc implements the CRI for the kubelet and hands images to CRI-O"
+    B: "CRI-O serves the kubelet's CRI calls and uses runc to start containers"
+    C: "CRI-O is an image registry, and runc pulls images from it for the kubelet"
+    D: "Both are CNI plugins that give Pods their network interfaces"
+  answer: B
+  explanation: >
+    CRI-O is an implementation of the Kubernetes Container Runtime Interface. It receives
+    the kubelet's gRPC calls, manages images and Pod sandboxes, and calls an OCI runtime
+    to create the containers - runc by default. runc doesn't speak CRI, and neither project
+    is a registry or a CNI plugin.
+  references:
+    - https://cri-o.io/
+    - https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+
+- id: kcna-kf-102
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Which protocol does the Container Runtime Interface (CRI) use between the kubelet and the runtime?
+  options:
+    A: REST over HTTPS
+    B: SSH
+    C: gRPC
+    D: AMQP
+  answer: C
+  explanation: >
+    The CRI defines a gRPC protocol. The kubelet acts as the gRPC client and connects to
+    the runtime's endpoint (a Unix socket set by --container-runtime-endpoint). This lets
+    the kubelet use any compliant runtime without recompiling.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/cri/
+
+- id: kcna-kf-103
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    The same image reference, app:2.1, is pulled by amd64 and by arm64 nodes, and each gets
+    a variant built for its CPU. What makes this possible?
+  options:
+    A: "The kubelet recompiles the image for the node's CPU"
+    B: "A RuntimeClass emulates one architecture on the other"
+    C: "The registry converts layers on the fly during the pull"
+    D: "An OCI image index that lists one manifest per platform"
+  answer: D
+  explanation: >
+    An image index is a higher-level manifest that points to platform-specific image
+    manifests. The runtime picks the entry that matches the node's OS and architecture.
+    Nothing recompiles or converts the image, and RuntimeClass selects a runtime handler,
+    not a CPU architecture.
+  references:
+    - https://github.com/opencontainers/image-spec/blob/main/image-index.md
+
+- id: kcna-kf-104
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    A kubelet runs with --container-runtime-endpoint=unix:///run/containerd/containerd.sock.
+    What does this setting point to?
+  options:
+    A: "The CNI configuration directory used for Pod networking"
+    B: "The API server endpoint that the kubelet reports node status to"
+    C: "The CRI gRPC socket the kubelet uses to talk to the runtime"
+    D: "A local registry mirror that caches images for the node"
+  answer: C
+  explanation: >
+    The kubelet is a gRPC client of the container runtime. The runtime and image service
+    endpoints are set with --container-runtime-endpoint (or containerRuntimeEndpoint in the
+    kubelet config file), usually a Unix socket such as containerd's. If the runtime behind
+    that socket is down, the kubelet can't launch Pods.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/cri/
+    - https://kubernetes.io/docs/setup/production-environment/container-runtimes/

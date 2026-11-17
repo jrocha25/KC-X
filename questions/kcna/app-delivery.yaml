@@ -1,8 +1,8 @@
-# KCNA — Cloud Native Application Delivery (16%) — 30 questions
-# Topics: application-delivery 20 · debugging 10
+# KCNA — Cloud Native Application Delivery (16%) — 40 questions
+# Topics: application-delivery 27 · debugging 13
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# --------------------------------------------------------- application-delivery (20)
+# --------------------------------------------------------- application-delivery (27)
 
 - id: kcna-ad-001
   domain: app-delivery
@@ -390,7 +390,151 @@
   references:
     - https://opengitops.dev/
 
-# -------------------------------------------------------------------- debugging (10)
+- id: kcna-ad-031
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    You run kubectl set image deployment/web app=app:2.0 on a Deployment that uses the
+    default RollingUpdate strategy. What does the Deployment controller do?
+  options:
+    A: "Restarts the containers of the existing Pods in place with the new image"
+    B: "Deletes the Deployment and recreates it from the updated template"
+    C: "Creates a new ReplicaSet and scales it up as it scales the old one down"
+    D: "Edits the current ReplicaSet so new Pods use app:2.0 and old ones remain"
+  answer: C
+  explanation: >
+    Changing the Pod template starts a rollout. The Deployment creates a new ReplicaSet
+    for the new template and gradually scales it up while scaling the old ReplicaSet down,
+    within maxSurge and maxUnavailable. The old ReplicaSet is kept (scaled to zero) so
+    you can roll back. Pods are replaced, not patched in place.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment
+
+- id: kcna-ad-032
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    You need to make several changes to a Deployment's Pod template (image, resources,
+    env) and want them rolled out together as a single rollout. Which approach fits?
+  options:
+    A: "Scale the Deployment to zero, apply each change, then scale it up"
+    B: "kubectl rollout pause, make the changes, then kubectl rollout resume"
+    C: "Apply each change with --dry-run=server, then apply them all at once"
+    D: "Set maxUnavailable to 0 so the controller batches the updates"
+  answer: B
+  explanation: >
+    While a Deployment is paused (.spec.paused), changes to its Pod template don't trigger
+    new rollouts. After kubectl rollout resume, all accumulated changes roll out together.
+    Scaling to zero causes downtime, a dry run changes nothing, and maxUnavailable only
+    controls how Pods are replaced.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pausing-and-resuming-a-deployment
+
+- id: kcna-ad-033
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: Which command lists the revisions of the Deployment web so you can pick one to roll back to?
+  options:
+    A: "kubectl get revisions deployment/web"
+    B: "kubectl describe rollout web"
+    C: "kubectl logs deployment/web --revisions"
+    D: "kubectl rollout history deployment/web"
+  answer: D
+  explanation: >
+    kubectl rollout history lists a Deployment's revisions (add --revision=N for the
+    details of one). kubectl rollout undo --to-revision=N then goes back to it. There is
+    no revisions resource or rollout object to describe, and kubectl logs prints container
+    output.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#checking-rollout-history-of-a-deployment
+
+- id: kcna-ad-034
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: hard
+  question: >
+    A Deployment reads environment variables from a ConfigMap that you just updated. The
+    image hasn't changed. Which command replaces the Pods so they pick up the new values?
+  options:
+    A: "kubectl rollout restart deployment/web"
+    B: "kubectl rollout undo deployment/web"
+    C: "kubectl set env deployment/web --reload"
+    D: "kubectl apply --force deployment/web"
+  answer: A
+  explanation: >
+    Environment variables are read only when a container starts. kubectl rollout restart
+    adds a restart annotation to the Pod template, which triggers a normal rolling update
+    with no change to the image. rollout undo goes back to an older revision, and the other
+    two options are not valid kubectl usage for this.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_restart/
+    - https://kubernetes.io/docs/concepts/configuration/configmap/
+
+- id: kcna-ad-035
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    A Helm chart's values.yaml sets replicaCount to 1, your prod.yaml file sets it to 3,
+    and you run helm install with -f prod.yaml --set replicaCount=5. How many replicas are
+    rendered?
+  options:
+    A: "1, because the chart's values.yaml always wins"
+    B: "3, because a values file overrides --set"
+    C: "The install fails because the value is defined twice"
+    D: "5, because --set has the highest priority"
+  answer: D
+  explanation: >
+    Helm merges values from least to most specific - the chart's values.yaml, then a parent
+    chart's values, then files passed with -f, then --set parameters. Later sources
+    override earlier ones, so --set replicaCount=5 wins. Defining a value in several
+    places is normal and not an error.
+  references:
+    - https://helm.sh/docs/chart_template_guide/values_files/
+
+- id: kcna-ad-036
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: Which kubectl flag builds the kustomization in a directory and applies the result?
+  options:
+    A: "kubectl apply -f overlays/prod/kustomization.yaml"
+    B: "kubectl apply -k overlays/prod"
+    C: "kubectl kustomize apply overlays/prod"
+    D: "kubectl apply --overlay overlays/prod"
+  answer: B
+  explanation: >
+    Kustomize is built into kubectl. kubectl apply -k <dir> renders the kustomization.yaml
+    in that directory and applies the output, and kubectl kustomize <dir> only prints the
+    rendered YAML. kubectl has no --overlay flag and no "kustomize apply" subcommand.
+  references:
+    - https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/
+
+- id: kcna-ad-037
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: hard
+  question: >
+    A rollout stalls because the new Pods never become Ready, and progressDeadlineSeconds
+    passes. What does Kubernetes do?
+  options:
+    A: "It rolls the Deployment back to the previous revision on its own"
+    B: "It deletes the new ReplicaSet and pauses the Deployment"
+    C: "It marks Progressing=False (ProgressDeadlineExceeded) and nothing more"
+    D: "It scales the old ReplicaSet back to full size and stops retrying"
+  answer: C
+  explanation: >
+    When the deadline passes, the Deployment controller adds a Progressing condition with
+    status False and reason ProgressDeadlineExceeded, and kubectl rollout status exits
+    non-zero. Kubernetes takes no other action. Rolling back is left to you (kubectl
+    rollout undo) or to a higher-level tool that watches the condition.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#failed-deployment
+
+# -------------------------------------------------------------------- debugging (13)
 
 - id: kcna-ad-014
   domain: app-delivery
@@ -587,3 +731,70 @@
     The container keeps its own image filesystem at /.
   references:
     - https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/
+
+- id: kcna-ad-038
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: >
+    Right after a release, a Pod's container starts, runs for a few seconds, exits with
+    code 1, and is restarted with growing delays (CrashLoopBackOff). What is the most likely
+    cause?
+  options:
+    A: "The application hits an error during startup and exits"
+    B: "The image tag doesn't exist in the registry anymore"
+    C: "No node has enough free CPU to schedule the Pod"
+    D: "Its CPU limit is too low, so the kernel throttles it"
+  answer: A
+  explanation: >
+    The container did start, so the image and scheduling are fine. A non-zero exit right
+    after startup usually means the application failed, for example an unhandled exception,
+    bad configuration or a missing dependency. A missing image gives ImagePullBackOff, no
+    capacity leaves the Pod Pending, and hitting a CPU limit only slows the container. Check
+    kubectl logs --previous and the exit code in kubectl describe.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-restarts
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/
+
+- id: kcna-ad-039
+  domain: app-delivery
+  topic: debugging
+  difficulty: easy
+  question: >
+    A container in a crash loop is restarted by the kubelet with an exponential back-off
+    (10s, 20s, 40s, ...). By default, what is the maximum delay between restarts?
+  options:
+    A: "60 seconds"
+    B: "5 minutes"
+    C: "10 minutes"
+    D: "There is no maximum"
+  answer: B
+  explanation: >
+    The kubelet restarts exited containers with an exponential back-off starting at 10s
+    and capped at 300 seconds (5 minutes). The timer resets once a container has run for
+    10 minutes without problems. The CrashLoopBackOff status means this back-off is
+    currently in effect.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-restarts
+
+- id: kcna-ad-040
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: >
+    To test cluster DNS, you want a throwaway Pod with an interactive shell that is deleted
+    automatically when you exit. Which command does this?
+  options:
+    A: "kubectl exec -it tmp --image=busybox -- sh"
+    B: "kubectl create pod tmp --image=busybox --shell"
+    C: "kubectl attach tmp --image=busybox --rm"
+    D: "kubectl run tmp -it --rm --image=busybox -- sh"
+  answer: D
+  explanation: >
+    kubectl run creates a Pod. -it attaches an interactive terminal, --rm deletes the Pod
+    after it exits, and -- sh sets the command. From that shell you can run nslookup
+    against a Service name. kubectl exec and attach only work on Pods that already exist,
+    and kubectl create has no pod subcommand.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_run/
+    - https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/

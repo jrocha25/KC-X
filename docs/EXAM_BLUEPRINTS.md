@@ -33,33 +33,33 @@ The official page lists each domain's competencies as topic headings only. Every
 
 | Domain | Weight | Topics | Per exam | Bank target |
 |---|---:|---|---:|---:|
-| Kubernetes Fundamentals | 44% | Kubernetes Core Concepts · Administration · Scheduling · Containerization | 26 | 78 |
-| Container Orchestration | 28% | Networking · Security · Troubleshooting · Storage | 17 | 51 |
-| Cloud Native Application Delivery | 16% | Application Delivery · Debugging | 10 | 30 |
-| Cloud Native Architecture | 12% | Observability · Cloud Native Ecosystem and Principles · Cloud Native Community and Collaboration | 7 | 21 |
-| **Total** | 100% | | **60** | **180** |
+| Kubernetes Fundamentals | 44% | Kubernetes Core Concepts · Administration · Scheduling · Containerization | 26 | 104 |
+| Container Orchestration | 28% | Networking · Security · Troubleshooting · Storage | 17 | 68 |
+| Cloud Native Application Delivery | 16% | Application Delivery · Debugging | 10 | 40 |
+| Cloud Native Architecture | 12% | Observability · Cloud Native Ecosystem and Principles · Cloud Native Community and Collaboration | 7 | 28 |
+| **Total** | 100% | | **60** | **240** |
 
 **How the counts are worked out:**
 - **Per exam:** the `weight × 60` split, rounded with the largest-remainder method (`kcx.bank.allocate`).
-- **Bank target:** three times the per-exam count, so three full mock exams can run without repeating a question. (KCSA uses twice the per-exam count.)
+- **Bank target:** four times the per-exam count, so four full mock exams can run without repeating a question. (KCSA uses twice the per-exam count.)
 
-**Planned topic split of the 180-question bank:**
+**Planned topic split of the 240-question bank:**
 
 | Domain | Topic | Questions |
 |---|---|---:|
-| Kubernetes Fundamentals | Core Concepts | 27 |
-| | Administration | 17 |
-| | Scheduling | 16 |
-| | Containerization | 18 |
-| Container Orchestration | Networking | 15 |
-| | Security | 14 |
-| | Troubleshooting | 10 |
-| | Storage | 12 |
-| Application Delivery | Application Delivery | 20 |
-| | Debugging | 10 |
-| Cloud Native Architecture | Observability | 9 |
-| | Ecosystem and Principles | 8 |
-| | Community and Collaboration | 4 |
+| Kubernetes Fundamentals | Core Concepts | 36 |
+| | Administration | 23 |
+| | Scheduling | 21 |
+| | Containerization | 24 |
+| Container Orchestration | Networking | 20 |
+| | Security | 19 |
+| | Troubleshooting | 13 |
+| | Storage | 16 |
+| Application Delivery | Application Delivery | 27 |
+| | Debugging | 13 |
+| Cloud Native Architecture | Observability | 12 |
+| | Ecosystem and Principles | 11 |
+| | Community and Collaboration | 5 |
 
 **Difficulty target:** about 40% easy, 45% medium, 15% hard.
 

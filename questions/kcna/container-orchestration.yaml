@@ -1,8 +1,8 @@
-# KCNA — Container Orchestration (28%) — 51 questions
-# Topics: networking 15 · security 14 · troubleshooting 10 · storage 12
+# KCNA — Container Orchestration (28%) — 68 questions
+# Topics: networking 20 · security 19 · troubleshooting 13 · storage 16
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# ------------------------------------------------------------------- networking (15)
+# ------------------------------------------------------------------- networking (20)
 
 - id: kcna-co-001
   domain: container-orchestration
@@ -296,7 +296,109 @@
   references:
     - https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/
 
-# --------------------------------------------------------------------- security (14)
+- id: kcna-co-052
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: >
+    A Pod in the namespace shop needs to call the Service api, which is also in shop. With
+    default DNS settings, which is the shortest name that resolves?
+  options:
+    A: api.svc
+    B: shop.api
+    C: api.cluster
+    D: api
+  answer: D
+  explanation: >
+    A Pod's DNS search list includes its own namespace (shop.svc.cluster.local), then
+    svc.cluster.local and cluster.local, so the bare name api expands to
+    api.shop.svc.cluster.local. To reach a Service in another namespace you need at least
+    <service>.<namespace>, for example api.shop.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+
+- id: kcna-co-053
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: With the default DNS policy, which nameserver does the kubelet write into a Pod's /etc/resolv.conf?
+  options:
+    A: "The ClusterIP of the cluster DNS Service, often named kube-dns"
+    B: "The node's own upstream resolver, copied from the host's resolv.conf"
+    C: "127.0.0.1, served by a DNS sidecar injected into every Pod"
+    D: "The kube-apiserver's IP, which answers DNS for Services"
+  answer: A
+  explanation: >
+    The kubelet configures each Pod's resolv.conf. With the default ClusterFirst policy it
+    points the nameserver at the cluster DNS Service (CoreDNS behind a Service usually
+    named kube-dns) and adds the namespace-based search list. Copying the node's resolver
+    is what dnsPolicy Default does.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
+    - https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
+
+- id: kcna-co-054
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: If a Pod spec does not set dnsPolicy, which DNS policy does the Pod get?
+  options:
+    A: Default
+    B: None
+    C: ClusterFirst
+    D: ClusterFirstWithHostNet
+  answer: C
+  explanation: >
+    The default is ClusterFirst - cluster names are answered by cluster DNS and other
+    names are forwarded upstream. Despite its name, the policy "Default" is NOT the default.
+    It makes the Pod inherit the node's resolver settings. None requires you to supply
+    everything in dnsConfig, and ClusterFirstWithHostNet is for hostNetwork Pods.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
+
+- id: kcna-co-055
+  domain: container-orchestration
+  topic: networking
+  difficulty: hard
+  question: >
+    A StatefulSet named web uses the headless Service nginx (serviceName nginx) in the
+    namespace default, and the cluster domain is cluster.local. What is the DNS name of its
+    first Pod?
+  options:
+    A: "web-0.web.default.svc.cluster.local"
+    B: "web-0.nginx.default.svc.cluster.local"
+    C: "nginx-0.web.default.svc.cluster.local"
+    D: "web.nginx-0.default.svc.cluster.local"
+  answer: B
+  explanation: >
+    StatefulSet Pods are named <statefulset>-<ordinal> (web-0). The governing headless
+    Service gives them the domain <service>.<namespace>.svc.cluster.local, so each Pod gets
+    <pod>.<service>.<namespace>.svc.cluster.local - web-0.nginx.default.svc.cluster.local.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
+
+- id: kcna-co-056
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: >
+    In the Gateway API, which resource does an application team create to define path-based
+    HTTP routing rules that attach to an existing Gateway?
+  options:
+    A: GatewayClass
+    B: Gateway
+    C: Ingress
+    D: HTTPRoute
+  answer: D
+  explanation: >
+    The Gateway API splits roles. Infrastructure providers define a GatewayClass, cluster
+    operators deploy a Gateway (listeners, addresses), and application developers attach
+    HTTPRoutes that match paths or headers and forward to backend Services. Ingress is the
+    older, separate API.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/gateway/
+
+# --------------------------------------------------------------------- security (19)
 
 - id: kcna-co-011
   domain: container-orchestration
@@ -568,7 +670,113 @@
   references:
     - https://kubernetes.io/docs/tasks/configmap-secret/managing-secret-using-kubectl/
 
-# -------------------------------------------------------------- troubleshooting (10)
+- id: kcna-co-057
+  domain: container-orchestration
+  topic: security
+  difficulty: easy
+  question: >
+    You want Pod Security Admission to apply the restricted Pod Security Standard to every
+    Pod in a group of workloads. Which object do you label?
+  options:
+    A: Pod
+    B: ServiceAccount
+    C: Namespace
+    D: Node
+  answer: C
+  explanation: >
+    Pod Security Admission is configured per namespace with labels of the form
+    pod-security.kubernetes.io/<MODE>=<LEVEL>, for example
+    pod-security.kubernetes.io/enforce=restricted. You don't need a separate policy object
+    (PodSecurityPolicy was removed in v1.25), and labels on Pods, ServiceAccounts or Nodes
+    have no effect.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-admission/
+
+- id: kcna-co-058
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    Before you enforce the restricted level on a namespace, you want users to get warnings
+    and the audit log to record violations, while Pods are still admitted. Which labels do
+    this?
+  options:
+    A: "pod-security.kubernetes.io/warn=restricted and .../audit=restricted"
+    B: "pod-security.kubernetes.io/enforce=restricted on its own"
+    C: "pod-security.kubernetes.io/enforce=privileged and .../warn=baseline"
+    D: "pod-security.kubernetes.io/dry-run=restricted and .../log=restricted"
+  answer: A
+  explanation: >
+    Pod Security Admission has three modes. Enforce rejects violating Pods, warn returns a
+    user-facing warning, and audit adds an annotation to the audit event. Warn and audit
+    still allow the Pod, so setting both to restricted previews the impact safely. There
+    are no dry-run or log modes.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-admission/
+
+- id: kcna-co-059
+  domain: container-orchestration
+  topic: security
+  difficulty: easy
+  question: In Kubernetes authentication, what does OIDC stand for?
+  options:
+    A: Open Identity Connectivity
+    B: OpenID Connect
+    C: OAuth Identity Delegation Client
+    D: Open Identity Directory Control
+  answer: B
+  explanation: >
+    OIDC is OpenID Connect, an authentication protocol built on OAuth 2.0. Identity
+    providers such as Microsoft Entra ID, Google or Dex issue signed ID tokens that the
+    kube-apiserver can be configured to trust. The other expansions are made up.
+  references:
+    - https://openid.net/developers/how-connect-works/
+    - https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens
+
+- id: kcna-co-060
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    The kube-apiserver is configured to trust an OpenID Connect provider. What does kubectl
+    send to authenticate a user?
+  options:
+    A: "The user's IdP password, which the API server verifies over LDAP"
+    B: "A ServiceAccount token created for the user in their namespace"
+    C: "A client certificate that the identity provider signed for the user"
+    D: "The user's ID token, a signed JWT, as a bearer token"
+  answer: D
+  explanation: >
+    With OIDC, the identity provider issues an id_token (a signed JWT with claims such as
+    email and groups). kubectl sends it in the Authorization: Bearer header, and the API
+    server validates it and maps the claims to a username and groups for RBAC. Kubernetes
+    has no User object, and ServiceAccounts are for workloads.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens
+
+- id: kcna-co-061
+  domain: container-orchestration
+  topic: security
+  difficulty: easy
+  question: >
+    Which open source tool scans clusters, YAML files and Helm charts for misconfigurations
+    against frameworks such as the NSA-CISA hardening guidance and MITRE ATT&CK?
+  options:
+    A: Falco
+    B: Linkerd
+    C: Kubescape
+    D: cert-manager
+  answer: C
+  explanation: >
+    Kubescape, a CNCF incubating project, assesses security posture by scanning clusters
+    and manifests against frameworks such as NSA-CISA, MITRE ATT&CK and the CIS
+    Benchmarks. Falco detects threats at runtime from system calls, Linkerd is a service
+    mesh, and cert-manager issues certificates.
+  references:
+    - https://github.com/kubescape/kubescape
+    - https://kubescape.io/docs/
+
+# -------------------------------------------------------------- troubleshooting (13)
 
 - id: kcna-co-020
   domain: container-orchestration
@@ -767,7 +975,73 @@
   references:
     - https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/
 
-# ----------------------------------------------------------------------- storage (12)
+- id: kcna-co-062
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: hard
+  question: >
+    Pods in the namespace payments log "temporary failure in name resolution" when calling
+    other Services, while Pods in other namespaces work. What is the best first step?
+  options:
+    A: "Restart every CoreDNS Pod in kube-system to clear its cache"
+    B: "Run nslookup for the Service name from a Pod in payments"
+    C: "Check the kube-scheduler logs for DNS-related errors"
+    D: "Delete and recreate the Services that are being called"
+  answer: B
+  explanation: >
+    Test DNS from the client's point of view - exec into a failing Pod (or start a
+    temporary Pod in that namespace) and run nslookup or dig, then check its
+    /etc/resolv.conf. This shows whether the problem is in that namespace (for example a
+    NetworkPolicy blocking port 53 or a wrong name) before you restart cluster-wide
+    components. The scheduler has nothing to do with DNS.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
+
+- id: kcna-co-063
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: hard
+  question: >
+    The container runtime on node worker-1 crashes and does not come back. What is the
+    main impact on that node?
+  options:
+    A: "Every running container on the node is stopped at the same moment"
+    B: "kube-scheduler moves the node's Pods to other nodes within seconds"
+    C: "Only image pulls fail, because the kubelet runs containers itself"
+    D: "The kubelet can no longer start or manage containers on the node"
+  answer: D
+  explanation: >
+    The kubelet needs a working container runtime to launch Pods and their containers. With
+    the runtime down, new containers can't be started and the kubelet can't manage existing
+    ones, so the node soon reports NotReady. Containers that are already running aren't
+    killed by the outage itself. The scheduler never moves running Pods. Eviction from an
+    unhealthy node is handled by the node controller after a grace period.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/cri/
+    - https://kubernetes.io/docs/concepts/architecture/nodes/
+
+- id: kcna-co-064
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    A Pod stays Pending, and its events say "0/3 nodes are available: 3 node(s) had
+    untolerated taint {dedicated: gpu}". What resolves this for the Pod?
+  options:
+    A: "Add a matching toleration to the Pod, or remove the taint"
+    B: "Raise the Pod's CPU request so it gets higher priority"
+    C: "Add the label dedicated=gpu to the Pod's metadata"
+    D: "Restart the kubelet on each node to clear the taint"
+  answer: A
+  explanation: >
+    A taint repels every Pod that doesn't tolerate it. The scheduler skips all three nodes
+    because the Pod has no toleration for dedicated=gpu. Add a toleration (if the Pod
+    belongs on those nodes) or remove the taint. Pod labels don't match taints, and
+    restarting the kubelet doesn't remove taints.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+
+# ----------------------------------------------------------------------- storage (16)
 
 - id: kcna-co-027
   domain: container-orchestration
@@ -998,3 +1272,87 @@
     API server accepts the claim even when nothing can satisfy it yet.
   references:
     - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+
+- id: kcna-co-065
+  domain: container-orchestration
+  topic: storage
+  difficulty: medium
+  question: >
+    Many early volume plugins were compiled into Kubernetes itself ("in-tree"). Which
+    problem does the Container Storage Interface (CSI) solve for storage vendors?
+  options:
+    A: "It stores volume data in etcd so vendors no longer need disks"
+    B: "It ships a separate, vendor-specific kubelet build for each storage system"
+    C: "Vendors build drivers to an open spec without changing Kubernetes code"
+    D: "It replaces PersistentVolumes with a separate CRD per vendor"
+  answer: C
+  explanation: >
+    CSI is a standard interface for container orchestrators to expose arbitrary storage
+    systems. Vendors write a driver to that open specification and release it on their
+    own schedule, without adding code to the Kubernetes repository. The same driver model
+    works across orchestrators, which reduces lock-in. PVs and PVCs stay the same.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/volumes/#out-of-tree-volume-plugins
+    - https://github.com/container-storage-interface/spec
+
+- id: kcna-co-066
+  domain: container-orchestration
+  topic: storage
+  difficulty: hard
+  question: How is a typical CSI driver deployed in a Kubernetes cluster?
+  options:
+    A: "It is compiled into kube-apiserver and turned on with a flag"
+    B: "It is installed as a kubectl plugin on each admin workstation"
+    C: "It is stored as a ConfigMap that the kubelet reads at startup"
+    D: "As Pods - a controller Deployment plus a node DaemonSet"
+  answer: D
+  explanation: >
+    CSI drivers run as ordinary workloads. A controller component (a Deployment or
+    StatefulSet with sidecars such as external-provisioner and external-attacher) handles
+    create, attach and snapshot operations. A node component, deployed with a DaemonSet,
+    mounts volumes on every node. Nothing is compiled into Kubernetes.
+  references:
+    - https://kubernetes-csi.github.io/docs/deploying.html
+
+- id: kcna-co-067
+  domain: container-orchestration
+  topic: storage
+  difficulty: medium
+  question: >
+    A dynamically provisioned PVC of 10Gi is almost full. What is needed to grow it to
+    20Gi in place?
+  options:
+    A: "Delete the PVC and create a new one with 20Gi using the same name"
+    B: "The StorageClass sets allowVolumeExpansion, and you raise the PVC's request"
+    C: "Edit the bound PersistentVolume's capacity field to 20Gi directly"
+    D: "Change the access mode to ReadWriteMany so the volume can grow"
+  answer: B
+  explanation: >
+    A PVC can be expanded only if its StorageClass has allowVolumeExpansion set to true.
+    You then edit the PVC to request the larger size, and the existing volume is resized -
+    no new PV is created. Editing the PV's capacity directly can actually prevent the
+    automatic resize. Deleting the PVC risks the data, and access modes don't affect size.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/#expanding-persistent-volumes-claims
+
+- id: kcna-co-068
+  domain: container-orchestration
+  topic: storage
+  difficulty: medium
+  question: >
+    You took a VolumeSnapshot named db-snap and want a new PVC that starts with its data.
+    What do you set in the new PVC?
+  options:
+    A: "spec.dataSource pointing to the VolumeSnapshot db-snap"
+    B: "spec.volumeName set to the name of the snapshot db-snap"
+    C: "An annotation that asks the kubelet to copy from db-snap"
+    D: "spec.storageClassName set to the snapshot's class name"
+  answer: A
+  explanation: >
+    To restore, create a PVC whose spec.dataSource has kind VolumeSnapshot, apiGroup
+    snapshot.storage.k8s.io and name db-snap. The CSI driver provisions a new volume that
+    contains the snapshot's data. volumeName binds to an existing PV, and storageClassName
+    selects a StorageClass, not a VolumeSnapshotClass.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/#volume-snapshot-and-restore-volume-from-snapshot-support
+    - https://kubernetes.io/docs/concepts/storage/volume-snapshots/
