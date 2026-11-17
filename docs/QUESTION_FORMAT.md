@@ -46,6 +46,15 @@ The goal is to feel like the real exam: short and precise, with one clearly corr
   - About 75% are short concept questions ("Which component…", "What does X do?").
   - About 15% are short scenarios ("A Pod is Pending with event …. What is the most likely cause?").
   - About 10% are recognition questions (a kubectl command, a manifest field, an `apiVersion`).
+- **Stay at the cert's level (KCNA scope).** KCNA is an associate exam, so test concepts from the curriculum topics,
+  everyday kubectl basics (get, describe, logs, exec, apply, scale, rollout, port-forward, debug) and well-known CNCF
+  projects at a "what is it for" level. Leave out:
+  - CKA/CKAD procedures (kubeadm upgrades, etcdctl, kubelet flags)
+  - niche kubectl flags or JSON paths
+  - exact edge-case defaults or version-policy numbers
+  - KCSA-depth security, such as PSA audit/warn modes, OIDC token flow or posture-scanning tools
+
+  A few `hard` stretch questions are fine.
 - **Distractors are plausible.** Use real component names, real flags and real objects used in the wrong place. Avoid joke answers.
 - **Options are about the same length.** The correct answer should not be noticeably the longest. A test fails if it is strictly the longest in more than 35% of questions; chance is about 25%.
 - **Use current Kubernetes only:**

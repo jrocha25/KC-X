@@ -326,27 +326,6 @@
     - https://glossary.cncf.io/continuous-delivery/
     - https://glossary.cncf.io/continuous-deployment/
 
-- id: kcna-ad-025
-  domain: app-delivery
-  topic: application-delivery
-  difficulty: medium
-  question: >
-    You can only roll a Deployment back to a few of its older revisions. Which field
-    controls how many old ReplicaSets it keeps for rollback?
-  options:
-    A: ".spec.minReadySeconds"
-    B: ".spec.progressDeadlineSeconds"
-    C: ".spec.strategy.rollingUpdate.maxSurge"
-    D: ".spec.revisionHistoryLimit"
-  answer: D
-  explanation: >
-    .spec.revisionHistoryLimit sets how many old ReplicaSets are kept (10 by default); the
-    rest are garbage-collected, and their revisions can no longer be rolled back to.
-    minReadySeconds, progressDeadlineSeconds and maxSurge affect how a rollout proceeds,
-    not how much history is kept.
-  references:
-    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
-
 - id: kcna-ad-026
   domain: app-delivery
   topic: application-delivery
@@ -411,27 +390,6 @@
   references:
     - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#updating-a-deployment
 
-- id: kcna-ad-032
-  domain: app-delivery
-  topic: application-delivery
-  difficulty: medium
-  question: >
-    You need to make several changes to a Deployment's Pod template (image, resources,
-    env) and want them rolled out together as a single rollout. Which approach fits?
-  options:
-    A: "Scale the Deployment to zero, apply each change, then scale it up"
-    B: "kubectl rollout pause, make the changes, then kubectl rollout resume"
-    C: "Apply each change with --dry-run=server, then apply them all at once"
-    D: "Set maxUnavailable to 0 so the controller batches the updates"
-  answer: B
-  explanation: >
-    While a Deployment is paused (.spec.paused), changes to its Pod template don't trigger
-    new rollouts. After kubectl rollout resume, all accumulated changes roll out together.
-    Scaling to zero causes downtime, a dry run changes nothing, and maxUnavailable only
-    controls how Pods are replaced.
-  references:
-    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pausing-and-resuming-a-deployment
-
 - id: kcna-ad-033
   domain: app-delivery
   topic: application-delivery
@@ -473,28 +431,6 @@
     - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_restart/
     - https://kubernetes.io/docs/concepts/configuration/configmap/
 
-- id: kcna-ad-035
-  domain: app-delivery
-  topic: application-delivery
-  difficulty: medium
-  question: >
-    A Helm chart's values.yaml sets replicaCount to 1, your prod.yaml file sets it to 3,
-    and you run helm install with -f prod.yaml --set replicaCount=5. How many replicas are
-    rendered?
-  options:
-    A: "1, because the chart's values.yaml always wins"
-    B: "3, because a values file overrides --set"
-    C: "The install fails because the value is defined twice"
-    D: "5, because --set has the highest priority"
-  answer: D
-  explanation: >
-    Helm merges values from least to most specific - the chart's values.yaml, then a parent
-    chart's values, then files passed with -f, then --set parameters. Later sources
-    override earlier ones, so --set replicaCount=5 wins. Defining a value in several
-    places is normal and not an error.
-  references:
-    - https://helm.sh/docs/chart_template_guide/values_files/
-
 - id: kcna-ad-036
   domain: app-delivery
   topic: application-delivery
@@ -513,26 +449,92 @@
   references:
     - https://kubernetes.io/docs/tasks/manage-kubernetes-objects/kustomization/
 
-- id: kcna-ad-037
+- id: kcna-ad-041
   domain: app-delivery
   topic: application-delivery
-  difficulty: hard
-  question: >
-    A rollout stalls because the new Pods never become Ready, and progressDeadlineSeconds
-    passes. What does Kubernetes do?
+  difficulty: easy
+  question: What does Infrastructure as Code (IaC) mean?
   options:
-    A: "It rolls the Deployment back to the previous revision on its own"
-    B: "It deletes the new ReplicaSet and pauses the Deployment"
-    C: "It marks Progressing=False (ProgressDeadlineExceeded) and nothing more"
-    D: "It scales the old ReplicaSet back to full size and stops retrying"
+    A: "Describing servers in a wiki page that operators follow step by step"
+    B: "Writing application code that is designed to run only on bare metal"
+    C: "Defining infrastructure in versioned files that tools apply automatically"
+    D: "Building every infrastructure driver directly into the host's kernel"
   answer: C
   explanation: >
-    When the deadline passes, the Deployment controller adds a Progressing condition with
-    status False and reason ProgressDeadlineExceeded, and kubectl rollout status exits
-    non-zero. Kubernetes takes no other action. Rolling back is left to you (kubectl
-    rollout undo) or to a higher-level tool that watches the condition.
+    IaC stores the definition of infrastructure in files, which replaces manual
+    provisioning. Kept in version control, those files are a single source of truth that
+    CI/CD pipelines can review and apply in an automated, repeatable way. Kubernetes
+    manifests applied from Git follow the same idea.
   references:
-    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#failed-deployment
+    - https://glossary.cncf.io/infrastructure-as-code/
+
+- id: kcna-ad-042
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    During a rolling update, new Pods need about 30 seconds to warm up after they start,
+    and users see errors because traffic reaches them too early. What should the team add?
+  options:
+    A: "A liveness probe, so that slow Pods are restarted until they respond"
+    B: "A readiness probe, so Pods get traffic only once they report ready"
+    C: "The Recreate strategy, so old Pods stop before any new ones start"
+    D: "More replicas, so that each new Pod receives a smaller share of traffic"
+  answer: B
+  explanation: >
+    A readiness probe tells Kubernetes when a container can accept traffic. Until it
+    passes, the Pod isn't added to its Services' endpoints, and the rolling update waits
+    for new Pods to become available before removing more old ones - that is how rolling
+    updates avoid downtime. A liveness probe would restart the slow Pods, Recreate causes
+    downtime, and more replicas would still send some traffic to Pods that aren't ready.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-ad-043
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    A pipeline pushes every build as app:latest. After a bad release, kubectl rollout undo
+    does not bring the old code back. Which practice prevents this?
+  options:
+    A: "Set imagePullPolicy to Always so nodes fetch the image on every start"
+    B: "Keep more old ReplicaSets so there are extra revisions to go back to"
+    C: "Tag each build with a unique version or commit SHA, never reused"
+    D: "Push the image to a second registry so an older copy is kept elsewhere"
+  answer: C
+  explanation: >
+    A rollback restores the old Pod template, but if that template still says app:latest
+    and the tag now points at the new build, the old code is gone. The Kubernetes docs
+    advise avoiding :latest in production and using a meaningful tag such as v1.42.0
+    and/or a digest, so each revision names exactly one image. Always pulling makes this
+    worse, extra revisions still name the same tag, and a second registry doesn't change
+    what the tag points to.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/images/
+
+- id: kcna-ad-044
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    Why do delivery pipelines usually apply declarative manifests instead of running a
+    sequence of imperative kubectl commands such as create and scale?
+  options:
+    A: "Manifests are applied faster because the API server skips validating them"
+    B: "Manifests state the desired end state and can be versioned and re-applied"
+    C: "Imperative commands are disabled on production clusters by default"
+    D: "Manifests let the pipeline skip RBAC checks for the objects it changes"
+  answer: B
+  explanation: >
+    A declarative manifest records the desired state of an object. Stored in Git, it can
+    be reviewed, versioned and applied again and again with kubectl apply or a GitOps
+    agent, with the same result each time. Imperative commands are one-off steps that
+    leave no record of the intended state. The API server validates and authorizes every
+    request either way, and imperative commands are not disabled.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/
 
 # -------------------------------------------------------------------- debugging (13)
 
@@ -691,47 +693,6 @@
   references:
     - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/
 
-- id: kcna-ad-029
-  domain: app-delivery
-  topic: debugging
-  difficulty: medium
-  question: >
-    You want to see the logs from every container in all Pods labeled app=web at once.
-    Which command does this?
-  options:
-    A: "kubectl logs deployment/web --label app=web --all"
-    B: "kubectl logs pods/app=web --containers"
-    C: "kubectl logs -l app=web --all-containers=true"
-    D: "kubectl get logs --selector app=web"
-  answer: C
-  explanation: >
-    -l (--selector) picks Pods by label, and --all-containers=true includes every container
-    in them. kubectl logs has no --label or --containers flags, and logs is not a resource
-    you can get.
-  references:
-    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_logs/
-
-- id: kcna-ad-030
-  domain: app-delivery
-  topic: debugging
-  difficulty: hard
-  question: >
-    You need to read the kubelet log on node worker-3 but have no SSH access to it. You run
-    kubectl debug node/worker-3 -it --image=ubuntu. Where is the node's filesystem in the
-    debug Pod?
-  options:
-    A: "Nowhere, as debug Pods cannot see the node's filesystem"
-    B: "Mounted at /host, so the log is under /host/var/log"
-    C: "Mounted at /, replacing the ubuntu image's filesystem"
-    D: "Mounted at /node, but only after you run chroot /node"
-  answer: B
-  explanation: >
-    kubectl debug node creates a Pod on that node whose container has the node's root
-    filesystem mounted at /host, so logs such as /host/var/log/kubelet.log can be read.
-    The container keeps its own image filesystem at /.
-  references:
-    - https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/
-
 - id: kcna-ad-038
   domain: app-delivery
   topic: debugging
@@ -756,27 +717,6 @@
     - https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-restarts
     - https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/
 
-- id: kcna-ad-039
-  domain: app-delivery
-  topic: debugging
-  difficulty: easy
-  question: >
-    A container in a crash loop is restarted by the kubelet with an exponential back-off
-    (10s, 20s, 40s, ...). By default, what is the maximum delay between restarts?
-  options:
-    A: "60 seconds"
-    B: "5 minutes"
-    C: "10 minutes"
-    D: "There is no maximum"
-  answer: B
-  explanation: >
-    The kubelet restarts exited containers with an exponential back-off starting at 10s
-    and capped at 300 seconds (5 minutes). The timer resets once a container has run for
-    10 minutes without problems. The CrashLoopBackOff status means this back-off is
-    currently in effect.
-  references:
-    - https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#container-restarts
-
 - id: kcna-ad-040
   domain: app-delivery
   topic: debugging
@@ -798,3 +738,72 @@
   references:
     - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_run/
     - https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
+
+- id: kcna-ad-045
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: >
+    kubectl get pods shows the Pod web-1 with STATUS Running but READY 0/1. What does
+    this mean?
+  options:
+    A: "The container image is still being pulled onto the node"
+    B: "The scheduler has not assigned the Pod to a node yet"
+    C: "The container runs but has not passed its readiness check"
+    D: "The container has exited and is waiting to be restarted"
+  answer: C
+  explanation: >
+    Running means the Pod is bound to a node and its container has started. READY 0/1
+    means the container isn't ready yet - usually its readiness (or startup) probe hasn't
+    passed - so the Pod gets no Service traffic. A Pod that is pulling images or waiting
+    for a node isn't Running yet, and an exited container shows a status such as Error or
+    CrashLoopBackOff. kubectl describe pod lists the probe failures in its events.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
+    - https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/
+
+- id: kcna-ad-046
+  domain: app-delivery
+  topic: debugging
+  difficulty: hard
+  question: >
+    A container is restarted about once a minute, but its logs show no errors. kubectl
+    describe pod lists the event "Liveness probe failed: HTTP probe failed with
+    statuscode: 404". What is the most likely cause?
+  options:
+    A: "The node is out of memory, so the kubelet evicts the Pod"
+    B: "The image tag changed, so the kubelet keeps pulling it again"
+    C: "The liveness probe checks a path that the app doesn't serve"
+    D: "A failing readiness probe keeps removing it from its Service"
+  answer: C
+  explanation: >
+    The kubelet restarts a container when its liveness probe keeps failing. A 404 means
+    the app is up and answering, just not on the probed path, so the probe's httpGet path
+    (or port) is probably wrong. Fix the probe, not the app. Eviction removes the Pod
+    rather than restarting a container, a tag change doesn't cause restarts, and readiness
+    failures stop traffic without restarting anything.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/liveness-readiness-startup-probes/
+    - https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/
+
+- id: kcna-ad-047
+  domain: app-delivery
+  topic: debugging
+  difficulty: easy
+  question: >
+    You want to see the full live definition of the Pod web-1 as stored by the API
+    server, including its status fields. Which command shows this?
+  options:
+    A: "kubectl describe pod web-1 --raw"
+    B: "kubectl logs web-1 --spec"
+    C: "kubectl explain pod web-1"
+    D: "kubectl get pod web-1 -o yaml"
+  answer: D
+  explanation: >
+    kubectl get with -o yaml (or -o json) prints the complete object - metadata, spec and
+    status - as the API server returns it, which is useful for checking what was actually
+    applied. kubectl describe gives a readable summary with events, kubectl explain
+    documents a resource type's schema, and kubectl logs prints container output.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/

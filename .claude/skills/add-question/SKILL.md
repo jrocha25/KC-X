@@ -9,6 +9,7 @@ Request: $ARGUMENTS
 2. **Pick ids:** a new question gets the next free id for that domain, so grep the whole `questions/<cert>/` folder for the highest `<cert>-<abbr>-NNN`. Never reuse a deleted id.
 3. **Write the question:**
    - Original wording only. Never reproduce real-exam or dump content.
+   - Stay within the cert's scope. For KCNA, that means associate-level concepts, not CKA/CKAD procedures, niche flags or KCSA-depth security. See "KCNA scope" in `docs/QUESTION_FORMAT.md`.
    - Four plausible options of similar length. Don't let the correct option be the longest.
    - No "all/none of the above" or "A and B". Quote option values YAML could misread (`yes`, `no`, `true`, `on`, numbers, a leading backtick, `*`, `&`, `[`, `{`).
    - Use a capitalized NOT and avoid double negatives.

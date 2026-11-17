@@ -600,26 +600,6 @@
   references:
     - https://kubernetes.io/docs/concepts/workloads/pods/
 
-- id: kcna-kf-083
-  domain: k8s-fundamentals
-  topic: core-concepts
-  difficulty: medium
-  question: Which two kinds of heartbeat does Kubernetes use to decide whether a node is still available?
-  options:
-    A: "ICMP pings from the API server and periodic writes to etcd"
-    B: "Events in the default namespace and ConfigMap updates"
-    C: "Updates to the Node's status and to its Lease in kube-node-lease"
-    D: "gRPC calls from the kubelet to both kube-scheduler and kube-proxy"
-  answer: C
-  explanation: >
-    Nodes send two forms of heartbeat - updates to the .status of their Node object, and
-    renewals of a Lease object in the kube-node-lease namespace (each Node has one).
-    Leases are small, cheap updates that let the control plane notice a failed node
-    quickly without rewriting the whole Node status.
-  references:
-    - https://kubernetes.io/docs/concepts/architecture/nodes/#node-heartbeats
-    - https://kubernetes.io/docs/concepts/architecture/leases/
-
 - id: kcna-kf-084
   domain: k8s-fundamentals
   topic: core-concepts
@@ -698,6 +678,28 @@
     container runtime and kube-proxy (or a network plugin that replaces it) run on every
     node to start containers and route Service traffic.
   references:
+    - https://kubernetes.io/docs/concepts/overview/components/
+
+- id: kcna-kf-105
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    How do components such as kube-scheduler, the controllers and every kubelet exchange
+    cluster state with each other?
+  options:
+    A: "They call each other directly over a peer-to-peer gRPC mesh"
+    B: "Each component reads and writes etcd directly with its own client"
+    C: "All of them go through the kube-apiserver, the only one using etcd"
+    D: "They exchange state through ConfigMaps mounted on every node"
+  answer: C
+  explanation: >
+    Kubernetes uses a hub-and-spoke pattern. The kube-apiserver is the only component that
+    talks to etcd, and the scheduler, the controllers and the kubelets all watch and update
+    objects through the API. They don't call each other directly, and ConfigMaps are just
+    API objects, not a messaging channel.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/
     - https://kubernetes.io/docs/concepts/overview/components/
 
 # --------------------------------------------------------------- administration (23)
@@ -888,26 +890,6 @@
   references:
     - https://kubernetes.io/docs/reference/kubectl/
 
-- id: kcna-kf-029
-  domain: k8s-fundamentals
-  topic: administration
-  difficulty: hard
-  question: >
-    According to the Kubernetes version skew policy, which kubelet version is supported
-    with a kube-apiserver at v1.34?
-  options:
-    A: v1.31 (three minor versions older)
-    B: "v1.35 (only one minor version newer)"
-    C: v1.36 (two minor versions newer)
-    D: v1.30 (four minor versions older)
-  answer: A
-  explanation: >
-    The kubelet must not be newer than kube-apiserver and may be up to three minor versions
-    older (since v1.28; previously two). So v1.31–v1.34 kubelets are supported with a
-    v1.34 API server. This is why control planes are upgraded before nodes.
-  references:
-    - https://kubernetes.io/releases/version-skew-policy/
-
 - id: kcna-kf-062
   domain: k8s-fundamentals
   topic: administration
@@ -984,48 +966,6 @@
   references:
     - https://kubernetes.io/docs/reference/access-authn-authz/authorization/
 
-- id: kcna-kf-066
-  domain: k8s-fundamentals
-  topic: administration
-  difficulty: medium
-  question: >
-    What is the standard way to back up the state of every Kubernetes object in a
-    cluster that uses etcd?
-  options:
-    A: "Run kubectl get all -A -o yaml from the default namespace"
-    B: "Take a snapshot with etcdctl snapshot save"
-    C: "Copy the kubeconfig file from each control plane node"
-    D: "Export the kube-apiserver logs to object storage"
-  answer: B
-  explanation: >
-    All Kubernetes objects are stored in etcd, and an etcd snapshot captures that whole
-    state. kubectl get all only lists some resource types, a kubeconfig holds client
-    credentials, and logs do not contain the object state.
-  references:
-    - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
-
-- id: kcna-kf-067
-  domain: k8s-fundamentals
-  topic: administration
-  difficulty: hard
-  question: >
-    You are upgrading a kubeadm cluster from one minor version to the next. In which
-    order should you upgrade the nodes?
-  options:
-    A: "Control plane nodes first, one at a time, then the worker nodes"
-    B: "Worker nodes first, so the control plane is never ahead of kubelets"
-    C: "All nodes at once, because kubeadm doesn't allow mixed versions"
-    D: "Any order, provided that you skip at most two minor versions"
-  answer: A
-  explanation: >
-    The kubeadm upgrade workflow upgrades the primary control plane node, then any other
-    control plane nodes one at a time, and then the worker nodes. The kubelet may be older
-    than the API server but never newer, so workers go last. Skipping minor versions is
-    not supported.
-  references:
-    - https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/
-    - https://kubernetes.io/releases/version-skew-policy/
-
 - id: kcna-kf-088
   domain: k8s-fundamentals
   topic: administration
@@ -1052,42 +992,20 @@
   domain: k8s-fundamentals
   topic: administration
   difficulty: easy
-  question: Which apiVersion belongs to an alpha-level API?
+  question: Judging by its version name, which apiVersion belongs to an alpha-level API?
   options:
     A: autoscaling/v2
-    B: flowcontrol.apiserver.k8s.io/v1beta3
-    C: resource.k8s.io/v1alpha3
+    B: batch/v1
+    C: internal.apiserver.k8s.io/v1alpha1
     D: networking.k8s.io/v1
   answer: C
   explanation: >
     The version part of apiVersion tells you the stability level - names containing alpha
-    (v1alpha3) are alpha, names containing beta (v1beta1) are beta, and a plain vX (v1,
+    (v1alpha1) are alpha, names containing beta (v1beta1) are beta, and a plain vX (v1,
     v2) is stable. Built-in alpha versions are disabled by default and must be enabled in
     the kube-apiserver configuration.
   references:
     - https://kubernetes.io/docs/reference/using-api/#api-versioning
-
-- id: kcna-kf-090
-  domain: k8s-fundamentals
-  topic: administration
-  difficulty: hard
-  question: >
-    Under the Kubernetes deprecation policy, how long must a built-in beta API version
-    keep being served after it is deprecated?
-  options:
-    A: "9 months or 3 minor releases, whichever is longer"
-    B: "Exactly 12 months, counted from the release that added it"
-    C: "Until the next major Kubernetes version, such as 2.0"
-    D: "Only until the next minor release, with no time minimum"
-  answer: A
-  explanation: >
-    Beta API versions are no longer served 9 months or 3 minor releases (whichever is
-    longer) after deprecation, giving users time to migrate. No rule promises "one year of
-    API compatibility" - the 12-month figure people quote is the approximate patch-support
-    window of a minor release. Keeping an API until the next major version is the rule for
-    GA versions, and alpha versions can be removed in any release.
-  references:
-    - https://kubernetes.io/docs/reference/using-api/deprecation-policy/
 
 - id: kcna-kf-091
   domain: k8s-fundamentals
@@ -1131,27 +1049,106 @@
   references:
     - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_set/kubectl_set_image/
 
-- id: kcna-kf-093
+- id: kcna-kf-106
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: >
+    A team runs its cluster on a managed Kubernetes service from a cloud provider. What
+    does the provider typically operate for them?
+  options:
+    A: "The control plane, including its availability, patches and upgrades"
+    B: "The team's application containers and their Helm chart values"
+    C: "The team's source code repositories and its CI pipelines"
+    D: "Only the worker nodes, while the team runs the control plane"
+  answer: A
+  explanation: >
+    With a managed control plane, the provider runs the API server, etcd, the scheduler
+    and the controller managers, and takes care of their scale, availability, patches and
+    upgrades. The team still deploys and operates its own workloads, and code and CI stay
+    the team's responsibility. Many providers can also manage worker node pools.
+  references:
+    - https://kubernetes.io/docs/setup/production-environment/
+
+- id: kcna-kf-107
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: Why do production clusters usually run three control plane nodes instead of one?
+  options:
+    A: "So the API server and etcd stay available if one control plane node fails"
+    B: "So each control plane node can schedule Pods for a third of the workers"
+    C: "So that kubectl can send every command to three API servers at the same time"
+    D: "Because kube-scheduler needs three replicas to calculate its node scores"
+  answer: A
+  explanation: >
+    A control plane on a single machine is a single point of failure. Running the control
+    plane components and etcd on several machines keeps the cluster API working when one
+    machine fails. etcd needs a majority of its members, so three members tolerate one
+    failure. Scheduling isn't split between nodes, and kubectl talks to one endpoint.
+  references:
+    - https://kubernetes.io/docs/setup/production-environment/
+    - https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/ha-topology/
+
+- id: kcna-kf-108
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which command adds the label disktype=ssd to the node worker-1?
+  options:
+    A: "kubectl label node worker-1 disktype=ssd"
+    B: "kubectl annotate node worker-1 disktype=ssd"
+    C: "kubectl set label node/worker-1 disktype=ssd"
+    D: "kubectl tag node worker-1 --label disktype=ssd"
+  answer: A
+  explanation: >
+    kubectl label adds or updates labels on any object, and kubectl get nodes
+    --show-labels confirms the result. Pods can then target the node with a nodeSelector.
+    kubectl annotate sets annotations, which selectors can't use, and kubectl has no set
+    label or tag commands.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/
+
+- id: kcna-kf-109
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which command lists the Pods in every namespace of the cluster?
+  options:
+    A: "kubectl get pods --namespace=*"
+    B: "kubectl get pods -A"
+    C: "kubectl get pods -n all"
+    D: "kubectl get pods --cluster"
+  answer: B
+  explanation: >
+    -A is short for --all-namespaces and lists the objects across all namespaces, adding a
+    NAMESPACE column. Without it, kubectl uses the namespace of the current context. -n
+    all looks for a namespace literally named all, and the other two forms aren't valid.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/
+
+- id: kcna-kf-110
   domain: k8s-fundamentals
   topic: administration
   difficulty: medium
   question: >
-    You want to change a container image in a Deployment with kubectl patch. At which
-    path in the Deployment object is the list of containers defined?
+    The release notes say that the API version a team's manifests use is deprecated and
+    will be removed in a future release. What should the team do?
   options:
-    A: ".spec.containers"
-    B: ".spec.template.spec.containers"
-    C: ".spec.template.containers"
-    D: ".spec.selector.template.containers"
+    A: "Nothing, because removed versions are converted to new ones automatically"
+    B: "Move the manifests to a newer API version before that release"
+    C: "Pin the cluster to its current version, as deprecated APIs can't be migrated"
+    D: "Switch the manifests to the alpha version of the same API for longer support"
   answer: B
   explanation: >
-    A Deployment's .spec.template is a Pod template, and a Pod template has its own spec,
-    so the containers live at .spec.template.spec.containers. A patch aimed at
-    .spec.containers changes nothing useful, because Deployments have no such field.
-    kubectl set image avoids getting this path wrong.
+    Once an API version is removed, the API server no longer accepts manifests that use
+    it. The deprecation guide tells users to migrate manifests and API clients to the newer
+    version before upgrading. Existing objects stay readable through the new version.
+    Staying on an old release only delays the work, and alpha versions have the weakest
+    support guarantees.
   references:
-    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
-    - https://kubernetes.io/docs/concepts/workloads/pods/#pod-templates
+    - https://kubernetes.io/docs/reference/using-api/deprecation-guide/
+    - https://kubernetes.io/docs/reference/using-api/deprecation-policy/
 
 # ------------------------------------------------------------------- scheduling (21)
 
@@ -1449,25 +1446,6 @@
   references:
     - https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/
 
-- id: kcna-kf-072
-  domain: k8s-fundamentals
-  topic: scheduling
-  difficulty: medium
-  question: A Pod spec sets nodeName to worker-2. How does this affect scheduling?
-  options:
-    A: "The scheduler treats worker-2 as a preference and may pick another node"
-    B: "The scheduler checks taints first, then binds the Pod to worker-2"
-    C: "The scheduler ignores the Pod, and the kubelet on worker-2 tries to run it"
-    D: "The scheduler rejects the Pod, because nodeName is reserved for static Pods"
-  answer: C
-  explanation: >
-    When nodeName is set, the scheduler skips the Pod and the named node's kubelet tries
-    to run it, overriding nodeSelector and affinity rules. If the node lacks resources, the
-    Pod fails (for example with OutOfcpu) instead of moving elsewhere. Node affinity or
-    nodeSelector are preferred because they do not bypass the scheduler.
-  references:
-    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
-
 - id: kcna-kf-094
   domain: k8s-fundamentals
   topic: scheduling
@@ -1549,26 +1527,46 @@
     - https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     - https://kubernetes.io/docs/concepts/scheduling-eviction/kube-scheduler/
 
-- id: kcna-kf-098
+- id: kcna-kf-111
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: easy
+  question: What is the difference between a container's resource request and its resource limit?
+  options:
+    A: "The request is what the scheduler reserves; the limit is the most it may use"
+    B: "The request is the most it may use; the limit is what the scheduler reserves"
+    C: "Requests apply only to memory, while limits apply only to CPU"
+    D: "Requests are set by the cluster admin, while limits are set by each node"
+  answer: A
+  explanation: >
+    The scheduler uses requests to find a node with enough free capacity, and that amount
+    is reserved for the container. The limit is a ceiling enforced at runtime - CPU is
+    throttled and memory overuse can lead to an OOM kill. Both can be set for CPU and
+    memory, and both are written in the Pod spec.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
+
+- id: kcna-kf-112
   domain: k8s-fundamentals
   topic: scheduling
   difficulty: medium
   question: >
-    A Pod sets spec.schedulerName to my-scheduler, but no scheduler with that name is
-    running in the cluster. What happens to the Pod?
+    A worker node fails permanently. Its Pods were created by a Deployment. What brings
+    the application back to its full number of replicas?
   options:
-    A: "It stays Pending until a scheduler with that name starts"
-    B: "The default scheduler picks it up after a short timeout"
-    C: "The API server rejects it because the scheduler is unknown"
-    D: "The kubelet on a random node starts it with no scheduling"
-  answer: A
+    A: "The failed node's kubelet live-migrates the containers elsewhere"
+    B: "The same Pods restart with the same names once the node comes back"
+    C: "Its ReplicaSet creates new Pods that are scheduled onto other nodes"
+    D: "The API server copies each Pod object over to a healthy node itself"
+  answer: C
   explanation: >
-    Each scheduler only handles Pods whose spec.schedulerName matches one of its profiles.
-    Pods without the field use default-scheduler. A Pod naming a scheduler that isn't
-    running is never picked up by the default scheduler and stays Pending until that
-    scheduler runs.
+    Pods are never moved. After the node controller evicts the Pods of an unreachable
+    node, the Deployment's ReplicaSet sees fewer replicas than desired and creates new
+    Pods, which kube-scheduler places on healthy nodes. This is why workloads should be run
+    through controllers rather than as bare Pods.
   references:
-    - https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/
+    - https://kubernetes.io/docs/concepts/architecture/nodes/#node-controller
+    - https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 
 # -------------------------------------------------------------- containerization (24)
 
@@ -1877,26 +1875,6 @@
   references:
     - https://github.com/opencontainers/runtime-spec/blob/main/spec.md
 
-- id: kcna-kf-077
-  domain: k8s-fundamentals
-  topic: containerization
-  difficulty: medium
-  question: >
-    An image defines ENTRYPOINT ["/app/server"] and CMD ["--port=80"]. The Pod's
-    container sets args to ["--port=9090"] but sets no command. What runs?
-  options:
-    A: "Only --port=9090, because args replaces the whole startup line"
-    B: "/app/server --port=80, because args is ignored without a command"
-    C: "/app/server --port=80 --port=9090, because args is appended to CMD"
-    D: "/app/server --port=9090, because args replaces only CMD"
-  answer: D
-  explanation: >
-    The Pod's command field corresponds to the image ENTRYPOINT and args to CMD. If you set
-    args but no command, the image's default command runs with your new arguments. Setting
-    command would replace the ENTRYPOINT as well.
-  references:
-    - https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
-
 - id: kcna-kf-078
   domain: k8s-fundamentals
   topic: containerization
@@ -2016,24 +1994,44 @@
   references:
     - https://github.com/opencontainers/image-spec/blob/main/image-index.md
 
-- id: kcna-kf-104
+- id: kcna-kf-113
   domain: k8s-fundamentals
   topic: containerization
   difficulty: medium
   question: >
-    A kubelet runs with --container-runtime-endpoint=unix:///run/containerd/containerd.sock.
-    What does this setting point to?
+    Rebuilding an image after a one-line code change is slow because all dependencies are
+    downloaded again every time. Which Dockerfile change usually fixes this?
   options:
-    A: "The CNI configuration directory used for Pod networking"
-    B: "The API server endpoint that the kubelet reports node status to"
-    C: "The CRI gRPC socket the kubelet uses to talk to the runtime"
-    D: "A local registry mirror that caches images for the node"
+    A: "Combine every instruction into one RUN step to create a single layer"
+    B: "Use the latest tag of the base image so it is always freshly pulled"
+    C: "Copy and install the dependency files before copying the source code"
+    D: "Add a HEALTHCHECK instruction so the build skips unchanged steps"
   answer: C
   explanation: >
-    The kubelet is a gRPC client of the container runtime. The runtime and image service
-    endpoints are set with --container-runtime-endpoint (or containerRuntimeEndpoint in the
-    kubelet config file), usually a Unix socket such as containerd's. If the runtime behind
-    that socket is down, the kubelet can't launch Pods.
+    Each Dockerfile instruction creates a layer, and a changed layer invalidates the cache
+    for every layer after it. Copying the dependency manifest and installing dependencies
+    first, then copying the frequently changing source code, lets the dependency layers be
+    reused. One giant layer can't be cached in parts, pulling a fresh base image adds work,
+    and HEALTHCHECK only affects running containers.
   references:
-    - https://kubernetes.io/docs/concepts/architecture/cri/
-    - https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+    - https://docs.docker.com/build/cache/optimize/
+
+- id: kcna-kf-114
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Why is each container usually designed to run a single main process or concern?
+  options:
+    A: "Because container runtimes can start only one process per container"
+    B: "Because cgroups can't limit containers that run several processes"
+    C: "So the image can be pulled faster from the container registry"
+    D: "So each part can be monitored, restarted and scaled independently"
+  answer: D
+  explanation: >
+    Decoupling an application into containers with one concern each makes them easier to
+    scale, reuse and replace. In Kubernetes the kubelet tracks and restarts each container
+    on its own, and helpers can run as sidecars in the same Pod. It's a guideline, not a
+    technical limit - runtimes and cgroups handle many processes per container.
+  references:
+    - https://docs.docker.com/build/building/best-practices/#decouple-applications
+    - https://kubernetes.io/docs/concepts/workloads/pods/

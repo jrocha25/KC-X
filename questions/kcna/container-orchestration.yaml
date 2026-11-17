@@ -275,27 +275,6 @@
   references:
     - https://kubernetes.io/docs/concepts/services-networking/service/
 
-- id: kcna-co-039
-  domain: container-orchestration
-  topic: networking
-  difficulty: hard
-  question: >
-    The backend Pods behind a LoadBalancer Service need to see the real client IP address.
-    Which setting achieves this, and what is the trade-off?
-  options:
-    A: "externalTrafficPolicy: Cluster, at the cost of extra latency from DNS lookups"
-    B: "externalTrafficPolicy: Local, at the cost of possibly uneven load across Pods"
-    C: "sessionAffinity: ClientIP, at the cost of losing all readiness probe checks"
-    D: "type: ExternalName, at the cost of losing load balancing between replicas"
-  answer: B
-  explanation: >
-    With externalTrafficPolicy Local, nodes only send external traffic to their own
-    endpoints, which preserves the client source IP and avoids a second hop. Because the
-    load balancer does not know how many Pods each node has, traffic may be spread
-    unevenly. The default, Cluster, hides the client IP but spreads load well.
-  references:
-    - https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/
-
 - id: kcna-co-052
   domain: container-orchestration
   topic: networking
@@ -317,66 +296,6 @@
   references:
     - https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
 
-- id: kcna-co-053
-  domain: container-orchestration
-  topic: networking
-  difficulty: medium
-  question: With the default DNS policy, which nameserver does the kubelet write into a Pod's /etc/resolv.conf?
-  options:
-    A: "The ClusterIP of the cluster DNS Service, often named kube-dns"
-    B: "The node's own upstream resolver, copied from the host's resolv.conf"
-    C: "127.0.0.1, served by a DNS sidecar injected into every Pod"
-    D: "The kube-apiserver's IP, which answers DNS for Services"
-  answer: A
-  explanation: >
-    The kubelet configures each Pod's resolv.conf. With the default ClusterFirst policy it
-    points the nameserver at the cluster DNS Service (CoreDNS behind a Service usually
-    named kube-dns) and adds the namespace-based search list. Copying the node's resolver
-    is what dnsPolicy Default does.
-  references:
-    - https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/
-    - https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
-
-- id: kcna-co-054
-  domain: container-orchestration
-  topic: networking
-  difficulty: medium
-  question: If a Pod spec does not set dnsPolicy, which DNS policy does the Pod get?
-  options:
-    A: Default
-    B: None
-    C: ClusterFirst
-    D: ClusterFirstWithHostNet
-  answer: C
-  explanation: >
-    The default is ClusterFirst - cluster names are answered by cluster DNS and other
-    names are forwarded upstream. Despite its name, the policy "Default" is NOT the default.
-    It makes the Pod inherit the node's resolver settings. None requires you to supply
-    everything in dnsConfig, and ClusterFirstWithHostNet is for hostNetwork Pods.
-  references:
-    - https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy
-
-- id: kcna-co-055
-  domain: container-orchestration
-  topic: networking
-  difficulty: hard
-  question: >
-    A StatefulSet named web uses the headless Service nginx (serviceName nginx) in the
-    namespace default, and the cluster domain is cluster.local. What is the DNS name of its
-    first Pod?
-  options:
-    A: "web-0.web.default.svc.cluster.local"
-    B: "web-0.nginx.default.svc.cluster.local"
-    C: "nginx-0.web.default.svc.cluster.local"
-    D: "web.nginx-0.default.svc.cluster.local"
-  answer: B
-  explanation: >
-    StatefulSet Pods are named <statefulset>-<ordinal> (web-0). The governing headless
-    Service gives them the domain <service>.<namespace>.svc.cluster.local, so each Pod gets
-    <pod>.<service>.<namespace>.svc.cluster.local - web-0.nginx.default.svc.cluster.local.
-  references:
-    - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
-
 - id: kcna-co-056
   domain: container-orchestration
   topic: networking
@@ -397,6 +316,92 @@
     older, separate API.
   references:
     - https://kubernetes.io/docs/concepts/services-networking/gateway/
+
+- id: kcna-co-069
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: >
+    The Pods of a web application are replaced on every rollout and get new IP addresses
+    each time. What gives clients a stable address to reach them?
+  options:
+    A: "A Service, which keeps a stable virtual IP and DNS name"
+    B: "A ConfigMap that lists the current Pod IPs for clients"
+    C: "A static IP that is set in each container's environment"
+    D: "The node's hostname, since Pods keep the node's address"
+  answer: A
+  explanation: >
+    Pods are ephemeral, and each new Pod gets a new IP address. A Service gives a set of
+    Pods, chosen by a label selector, one stable virtual IP and DNS name, and keeps its
+    list of endpoints up to date as Pods come and go. Clients never need to track Pod IPs.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+
+- id: kcna-co-070
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: >
+    A team exposes an API with a ClusterIP Service and then tries to call it from a laptop
+    outside the cluster, without success. What is the reason?
+  options:
+    A: "ClusterIP Services only accept traffic over the UDP protocol"
+    B: "A ClusterIP is reachable only from inside the cluster by default"
+    C: "ClusterIP Services need a NetworkPolicy before they accept traffic"
+    D: "The Service gets its ClusterIP only after the first Pod restart"
+  answer: B
+  explanation: >
+    ClusterIP, the default Service type, exposes the Service on an internal IP that is
+    reachable only from within the cluster. To reach it from outside, use a NodePort or
+    LoadBalancer Service, an Ingress or a Gateway (or kubectl port-forward for testing).
+    ClusterIP Services carry TCP and UDP, need no NetworkPolicy, and get their IP when
+    they are created.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+
+- id: kcna-co-071
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: >
+    A company runs 20 HTTP web applications in one cluster and wants a single external
+    entry point that routes requests by host name and path. Which approach fits best?
+  options:
+    A: "One NodePort Service per app, all opened on the same node port"
+    B: "A LoadBalancer Service for each app, each with its own public IP"
+    C: "ExternalName Services that map each host name to its own Pods"
+    D: "An Ingress or Gateway API controller with routing rules per app"
+  answer: D
+  explanation: >
+    Ingress and the Gateway API route HTTP traffic by host and path from one entry point to
+    many Services, so a single load balancer can serve all 20 apps. A LoadBalancer Service
+    per app works but needs 20 external load balancers. Two Services can't share one node
+    port, and ExternalName only returns a DNS CNAME for an external name.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/ingress/
+    - https://kubernetes.io/docs/concepts/services-networking/gateway/
+
+- id: kcna-co-072
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: >
+    The Service web selects three ready Pods. A client Pod sends many requests to the
+    Service's ClusterIP. How are those requests handled?
+  options:
+    A: "They are spread across the three ready Pods"
+    B: "They all go to the oldest Pod until it fails"
+    C: "They are sent to every Pod at once, as a broadcast"
+    D: "They go to the kube-apiserver, which forwards each one"
+  answer: A
+  explanation: >
+    A Service load-balances traffic for its virtual IP across the ready endpoints that
+    match its selector. kube-proxy (or a network plugin that replaces it) programs each
+    node so that every new connection goes to one of the backend Pods. There is no
+    broadcast, and Service traffic does not pass through the API server.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/
+    - https://kubernetes.io/docs/reference/networking/virtual-ips/
 
 # --------------------------------------------------------------------- security (19)
 
@@ -612,27 +617,6 @@
   references:
     - https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 
-- id: kcna-co-042
-  domain: container-orchestration
-  topic: security
-  difficulty: medium
-  question: >
-    An application never calls the Kubernetes API, so you don't want a ServiceAccount
-    token mounted into its Pods. What should you set?
-  options:
-    A: "automountServiceAccountToken: false on the Pod or its ServiceAccount"
-    B: "serviceAccountName: none in the Pod spec"
-    C: "readOnlyRootFilesystem: true in every container's securityContext"
-    D: "The label kubernetes.io/no-token on the namespace"
-  answer: A
-  explanation: >
-    Setting automountServiceAccountToken to false on the ServiceAccount or on the Pod stops
-    the API credentials from being mounted; if both set a value, the Pod spec wins. A
-    read-only root filesystem does not affect the token mount, and the other options do
-    not exist.
-  references:
-    - https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
-
 - id: kcna-co-043
   domain: container-orchestration
   topic: security
@@ -692,89 +676,115 @@
   references:
     - https://kubernetes.io/docs/concepts/security/pod-security-admission/
 
-- id: kcna-co-058
+- id: kcna-co-073
   domain: container-orchestration
   topic: security
   difficulty: medium
   question: >
-    Before you enforce the restricted level on a namespace, you want users to get warnings
-    and the audit log to record violations, while Pods are still admitted. Which labels do
-    this?
+    A CI job only needs to update Deployments in the namespace staging. Following the
+    principle of least privilege, how should it get access?
   options:
-    A: "pod-security.kubernetes.io/warn=restricted and .../audit=restricted"
-    B: "pod-security.kubernetes.io/enforce=restricted on its own"
-    C: "pod-security.kubernetes.io/enforce=privileged and .../warn=baseline"
-    D: "pod-security.kubernetes.io/dry-run=restricted and .../log=restricted"
+    A: "A Role that allows updating Deployments in staging, bound with a RoleBinding"
+    B: "A ClusterRoleBinding to cluster-admin, so the job never hits permission errors"
+    C: "A copy of the cluster administrator's kubeconfig stored in the CI system"
+    D: "A ClusterRole for all verbs on Deployments, bound with a ClusterRoleBinding"
   answer: A
   explanation: >
-    Pod Security Admission has three modes. Enforce rejects violating Pods, warn returns a
-    user-facing warning, and audit adds an annotation to the audit event. Warn and audit
-    still allow the Pod, so setting both to restricted previews the impact safely. There
-    are no dry-run or log modes.
+    Least privilege means granting only the permissions a task needs, in the narrowest
+    scope. A namespaced Role that allows reading and updating Deployments in staging,
+    granted to the job's ServiceAccount through a RoleBinding, does exactly that.
+    cluster-admin, the administrator's own credentials and a cluster-wide binding all give
+    far more access than the job needs.
   references:
-    - https://kubernetes.io/docs/concepts/security/pod-security-admission/
+    - https://kubernetes.io/docs/concepts/security/rbac-good-practices/
+    - https://kubernetes.io/docs/reference/access-authn-authz/rbac/
 
-- id: kcna-co-059
+- id: kcna-co-074
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: What does an admission controller in the kube-apiserver do?
+  options:
+    A: "Checks a user's password before any API request is accepted"
+    B: "Intercepts requests after authorization to check or change objects"
+    C: "Schedules newly created Pods onto nodes that pass security checks"
+    D: "Encrypts every object before the API server writes it into etcd"
+  answer: B
+  explanation: >
+    An admission controller intercepts requests to the API server after they are
+    authenticated and authorized, but before the object is stored. Mutating controllers
+    can change the object (for example to add defaults), and validating controllers can
+    reject it. Pod Security Admission and ResourceQuota work this way. Authentication,
+    scheduling and encryption at rest are handled elsewhere.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/
+
+- id: kcna-co-075
   domain: container-orchestration
   topic: security
   difficulty: easy
-  question: In Kubernetes authentication, what does OIDC stand for?
+  question: >
+    A team wants to stop container images with known vulnerabilities from reaching the
+    cluster. Which practice addresses this?
   options:
-    A: Open Identity Connectivity
-    B: OpenID Connect
-    C: OAuth Identity Delegation Client
-    D: Open Identity Directory Control
-  answer: B
+    A: "Raising CPU limits so that patched libraries load faster"
+    B: "Deploying the images with the Recreate update strategy"
+    C: "Scanning images for known CVEs in the CI/CD pipeline"
+    D: "Storing image names in a Secret instead of a ConfigMap"
+  answer: C
   explanation: >
-    OIDC is OpenID Connect, an authentication protocol built on OAuth 2.0. Identity
-    providers such as Microsoft Entra ID, Google or Dex issue signed ID tokens that the
-    kube-apiserver can be configured to trust. The other expansions are made up.
+    Image scanning checks the packages in an image against vulnerability databases. The
+    Kubernetes security checklist recommends scanning images regularly, usually in the
+    CI/CD pipeline before deployment, so that only patched images reach production.
+    Resource limits, rollout strategies and where an image name is stored don't change
+    what is inside the image.
   references:
-    - https://openid.net/developers/how-connect-works/
-    - https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens
+    - https://kubernetes.io/docs/concepts/security/security-checklist/#images
 
-- id: kcna-co-060
+- id: kcna-co-076
   domain: container-orchestration
   topic: security
   difficulty: medium
   question: >
-    The kube-apiserver is configured to trust an OpenID Connect provider. What does kubectl
-    send to authenticate a user?
+    A team wants every Pod in the namespace payments to reject incoming traffic unless
+    another policy explicitly allows it. What is the usual approach?
   options:
-    A: "The user's IdP password, which the API server verifies over LDAP"
-    B: "A ServiceAccount token created for the user in their namespace"
-    C: "A client certificate that the identity provider signed for the user"
-    D: "The user's ID token, a signed JWT, as a bearer token"
-  answer: D
+    A: "A default-deny NetworkPolicy that selects all Pods in payments"
+    B: "Deleting the Services in payments so that no traffic can reach it"
+    C: "The namespace label pod-security.kubernetes.io/enforce=restricted"
+    D: "A securityContext with runAsNonRoot: true on every Pod in payments"
+  answer: A
   explanation: >
-    With OIDC, the identity provider issues an id_token (a signed JWT with claims such as
-    email and groups). kubectl sends it in the Authorization: Bearer header, and the API
-    server validates it and maps the claims to a username and groups for RBAC. Kubernetes
-    has no User object, and ServiceAccounts are for workloads.
+    Pods accept all traffic until a NetworkPolicy selects them. A default-deny policy with
+    an empty podSelector and the Ingress policy type isolates every Pod in the namespace,
+    and further policies then allow only the traffic that is needed. Pods stay reachable
+    by IP without Services, and Pod Security labels and securityContext control what a
+    container may do, not network traffic. The network plugin must enforce NetworkPolicy.
   references:
-    - https://kubernetes.io/docs/reference/access-authn-authz/authentication/#openid-connect-tokens
+    - https://kubernetes.io/docs/concepts/services-networking/network-policies/
+    - https://kubernetes.io/docs/concepts/security/security-checklist/
 
-- id: kcna-co-061
+- id: kcna-co-077
   domain: container-orchestration
   topic: security
   difficulty: easy
   question: >
-    Which open source tool scans clusters, YAML files and Helm charts for misconfigurations
-    against frameworks such as the NSA-CISA hardening guidance and MITRE ATT&CK?
+    An application needs a database password at runtime. Where should the password be
+    kept in Kubernetes?
   options:
-    A: Falco
-    B: Linkerd
-    C: Kubescape
-    D: cert-manager
-  answer: C
+    A: "In a ConfigMap that is mounted into the container as a file"
+    B: "Hard-coded into the container image during the CI build"
+    C: "In an annotation on the application's Deployment object"
+    D: "In a Secret, consumed by the Pod as a file or variable"
+  answer: D
   explanation: >
-    Kubescape, a CNCF incubating project, assesses security posture by scanning clusters
-    and manifests against frameworks such as NSA-CISA, MITRE ATT&CK and the CIS
-    Benchmarks. Falco detects threats at runtime from system calls, Linkerd is a service
-    mesh, and cert-manager issues certificates.
+    Secrets hold confidential data such as passwords, tokens and keys, separately from Pod
+    specs and images. Pods consume them as mounted files or environment variables, and
+    access can be restricted with RBAC and protected with encryption at rest. ConfigMaps
+    are for non-confidential settings, and a value baked into an image or an annotation is
+    visible to anyone who can read those.
   references:
-    - https://github.com/kubescape/kubescape
-    - https://kubescape.io/docs/
+    - https://kubernetes.io/docs/concepts/configuration/secret/
 
 # -------------------------------------------------------------- troubleshooting (13)
 
@@ -955,26 +965,6 @@
   references:
     - https://kubernetes.io/docs/tasks/administer-cluster/dns-debugging-resolution/
 
-- id: kcna-co-047
-  domain: container-orchestration
-  topic: troubleshooting
-  difficulty: hard
-  question: >
-    A container reads an environment variable from a ConfigMap key and marks the
-    reference as optional: true. The ConfigMap doesn't exist yet. What happens to the Pod?
-  options:
-    A: "It stays Pending until someone creates the ConfigMap"
-    B: "It starts, and the variable's value is left empty"
-    C: "It is rejected by the API server at creation time"
-    D: "It starts, and the variable gets the key's name"
-  answer: B
-  explanation: >
-    A ConfigMap reference marked optional does not block the Pod. If the ConfigMap or key
-    is missing, the data it would provide, here the environment variable, is empty. Without
-    optional, a missing ConfigMap prevents the container from starting.
-  references:
-    - https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/
-
 - id: kcna-co-062
   domain: container-orchestration
   topic: troubleshooting
@@ -1040,6 +1030,28 @@
     restarting the kubelet doesn't remove taints.
   references:
     - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+
+- id: kcna-co-078
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    A new Pod stays Pending, and its events show "pod has unbound immediate
+    PersistentVolumeClaims". What should you check?
+  options:
+    A: "Whether the container image exists in the registry"
+    B: "Whether its PVC can bind to a PV or a StorageClass"
+    C: "Whether the Pod's readiness probe path is correct"
+    D: "Whether the Service selector matches the Pod labels"
+  answer: B
+  explanation: >
+    The scheduler can't place a Pod whose PersistentVolumeClaim is still unbound. Run
+    kubectl get pvc and kubectl describe pvc to see why - common causes are no matching
+    PV, no default StorageClass, or a provisioner error. Image pulls and probes only matter
+    after the Pod is scheduled, and Service selectors don't affect scheduling.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/
 
 # ----------------------------------------------------------------------- storage (16)
 
@@ -1295,64 +1307,64 @@
     - https://kubernetes.io/docs/concepts/storage/volumes/#out-of-tree-volume-plugins
     - https://github.com/container-storage-interface/spec
 
-- id: kcna-co-066
-  domain: container-orchestration
-  topic: storage
-  difficulty: hard
-  question: How is a typical CSI driver deployed in a Kubernetes cluster?
-  options:
-    A: "It is compiled into kube-apiserver and turned on with a flag"
-    B: "It is installed as a kubectl plugin on each admin workstation"
-    C: "It is stored as a ConfigMap that the kubelet reads at startup"
-    D: "As Pods - a controller Deployment plus a node DaemonSet"
-  answer: D
-  explanation: >
-    CSI drivers run as ordinary workloads. A controller component (a Deployment or
-    StatefulSet with sidecars such as external-provisioner and external-attacher) handles
-    create, attach and snapshot operations. A node component, deployed with a DaemonSet,
-    mounts volumes on every node. Nothing is compiled into Kubernetes.
-  references:
-    - https://kubernetes-csi.github.io/docs/deploying.html
-
-- id: kcna-co-067
+- id: kcna-co-079
   domain: container-orchestration
   topic: storage
   difficulty: medium
-  question: >
-    A dynamically provisioned PVC of 10Gi is almost full. What is needed to grow it to
-    20Gi in place?
+  question: What is the difference between static and dynamic provisioning of PersistentVolumes?
   options:
-    A: "Delete the PVC and create a new one with 20Gi using the same name"
-    B: "The StorageClass sets allowVolumeExpansion, and you raise the PVC's request"
-    C: "Edit the bound PersistentVolume's capacity field to 20Gi directly"
-    D: "Change the access mode to ReadWriteMany so the volume can grow"
+    A: "Static PVs can only be mounted read-only, while dynamic PVs are writable"
+    B: "Admins create static PVs in advance; dynamic PVs are created on demand"
+    C: "Static PVs live on the node's local disk, while dynamic PVs live in etcd"
+    D: "Static PVs belong to one namespace, while dynamic PVs are cluster-wide"
   answer: B
   explanation: >
-    A PVC can be expanded only if its StorageClass has allowVolumeExpansion set to true.
-    You then edit the PVC to request the larger size, and the existing volume is resized -
-    no new PV is created. Editing the PV's capacity directly can actually prevent the
-    automatic resize. Deleting the PVC risks the data, and access modes don't affect size.
+    With static provisioning a cluster administrator creates PersistentVolumes in advance,
+    and claims bind to them. With dynamic provisioning the provisioner named in a
+    StorageClass creates a volume automatically when a PVC asks for one. Both kinds of PV
+    are cluster-scoped, can be writable, and are backed by real storage, not etcd.
   references:
-    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/#expanding-persistent-volumes-claims
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
+    - https://kubernetes.io/docs/concepts/storage/dynamic-provisioning/
 
-- id: kcna-co-068
+- id: kcna-co-080
   domain: container-orchestration
   topic: storage
   difficulty: medium
   question: >
-    You took a VolumeSnapshot named db-snap and want a new PVC that starts with its data.
-    What do you set in the new PVC?
+    A StatefulSet runs three database replicas, and each one needs its own persistent disk
+    that stays with it when it is rescheduled. Which StatefulSet feature provides this?
   options:
-    A: "spec.dataSource pointing to the VolumeSnapshot db-snap"
-    B: "spec.volumeName set to the name of the snapshot db-snap"
-    C: "An annotation that asks the kubelet to copy from db-snap"
-    D: "spec.storageClassName set to the snapshot's class name"
+    A: "volumeClaimTemplates, which create one PVC for each replica"
+    B: "A single shared PVC listed under the Pod template's volumes"
+    C: "An emptyDir volume with its medium set to Memory"
+    D: "A hostPath volume that points at the same path on every node"
   answer: A
   explanation: >
-    To restore, create a PVC whose spec.dataSource has kind VolumeSnapshot, apiGroup
-    snapshot.storage.k8s.io and name db-snap. The CSI driver provisions a new volume that
-    contains the snapshot's data. volumeName binds to an existing PV, and storageClassName
-    selects a StorageClass, not a VolumeSnapshotClass.
+    A StatefulSet's volumeClaimTemplates create one PersistentVolumeClaim per Pod (for
+    example data-db-0 and data-db-1). When a Pod is rescheduled it gets the same claim
+    back, so its data follows it. A shared PVC would give every replica the same volume,
+    emptyDir is deleted with the Pod, and hostPath ties the data to one node.
   references:
-    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/#volume-snapshot-and-restore-volume-from-snapshot-support
-    - https://kubernetes.io/docs/concepts/storage/volume-snapshots/
+    - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-storage
+
+- id: kcna-co-081
+  domain: container-orchestration
+  topic: storage
+  difficulty: easy
+  question: >
+    Two containers in the same Pod need to share scratch files, and the data only has to
+    last as long as the Pod. Which volume type fits best?
+  options:
+    A: hostPath
+    B: PersistentVolumeClaim
+    C: configMap
+    D: emptyDir
+  answer: D
+  explanation: >
+    An emptyDir volume is created empty when the Pod starts on a node, can be mounted by
+    every container in the Pod, and is deleted together with the Pod. A PVC keeps data
+    beyond the Pod's life, hostPath exposes the node's own filesystem, and a configMap
+    volume provides read-only configuration.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/volumes/#emptydir

@@ -451,27 +451,29 @@
     - https://github.com/kubescape/kubescape
     - https://falco.org/docs/
 
-- id: kcna-ca-027
+- id: kcna-ca-029
   domain: cn-architecture
   topic: ecosystem-principles
   difficulty: medium
   question: >
-    The Kubernetes documentation, following the CNCF cloud native security white paper,
-    groups security controls by lifecycle phase. Which phases are these?
+    A web service keeps each user's session in the memory of the replica that served them.
+    Whenever Pods are scaled out or replaced, users are logged out. Which cloud native
+    principle does this design break?
   options:
-    A: "Plan, Code, Test and Release"
-    B: "Cloud, Cluster, Container and Code"
-    C: "Identify, Protect, Detect and Respond"
-    D: "Develop, Distribute, Deploy and Runtime"
+    A: "Services should always be scaled vertically instead of horizontally"
+    B: "Each service should be built as one large container image"
+    C: "Configuration should be compiled into the application binary"
+    D: "Processes should be stateless and keep state in a backing service"
   answer: D
   explanation: >
-    The CNCF white paper and the Kubernetes "Cloud native security and Kubernetes" page
-    organise controls by lifecycle phase - Develop, Distribute, Deploy and Runtime.
-    Cloud/Cluster/Container/Code is the older 4C layering model (outermost layer first),
-    Identify/Protect/Detect/Respond comes from the NIST Cybersecurity Framework, and
-    Plan/Code/Test/Release are DevOps stages.
+    Cloud native services are designed to be stateless and disposable - any replica can
+    serve any request, so Pods can be added, removed or rescheduled freely. Session data
+    belongs in a backing service such as a database or cache. Vertical scaling, large
+    images and compiled-in configuration go against cloud native practice and would not
+    fix the problem.
   references:
-    - https://kubernetes.io/docs/concepts/security/cloud-native-security/
+    - https://glossary.cncf.io/stateless-apps/
+    - https://12factor.net/processes
 
 # ---------------------------------------------------- community-collaboration (5)
 
