@@ -1,0 +1,22 @@
+# KC-X on a homelab server, from the image GitLab CI pushes (.gitlab-ci.yml).
+# The live copy for rockinator is in the gitops repo: docker/rockinator/kcx.yaml.
+#
+#   docker compose -f deploy/docker-compose.yaml up -d
+#
+# KC-X has no authentication and anyone who can reach it can wipe the history:
+# publish it on the LAN only, never behind a public route.
+#
+# Using a bind mount instead of the named volume? The container runs as uid 1000:
+#   mkdir -p /path/to/data && chown 1000:1000 /path/to/data
+services:
+  kcx:
+    image: reg.joao-rocha.com/kcx:latest  # or a release tag; :latest follows main
+    container_name: kcx
+    restart: unless-stopped
+    volumes:
+      - kcx-data:/data  # SQLite attempt history
+    ports:
+      - "3350:8080"
+
+volumes:
+  kcx-data: {}

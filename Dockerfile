@@ -1,4 +1,9 @@
-FROM python:3.12-slim
+# Two targets:
+#   runtime (default, last stage): the slim image CI pushes and the homelab runs.
+#   test: runtime + pytest and tests/, used by the local compose.yaml.
+
+# ---- base: app code and runtime deps only
+FROM python:3.12-slim AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
@@ -7,16 +12,13 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# Dev requirements (pytest) are installed too so `docker compose run --rm kcx pytest` works.
-COPY requirements.txt requirements-dev.txt ./
-RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY kcx/ kcx/
 COPY certs/ certs/
 COPY questions/ questions/
 COPY scripts/ scripts/
-COPY tests/ tests/
-COPY pytest.ini ./
 
 # Non-root user. /data must exist and be owned by kcx BEFORE switching user,
 # otherwise a fresh named volume mounted there is root-owned and SQLite can't write.
@@ -27,3 +29,15 @@ USER kcx
 
 EXPOSE 8080
 CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "kcx:create_app()"]
+
+# ---- test: adds pytest and the tests so `docker compose run --rm kcx pytest` works
+FROM base AS test
+USER root
+COPY requirements-dev.txt ./
+RUN pip install --no-cache-dir -r requirements-dev.txt
+COPY tests/ tests/
+COPY pytest.ini ./
+USER kcx
+
+# ---- runtime: last stage, so a plain `docker build .` produces it
+FROM base AS runtime

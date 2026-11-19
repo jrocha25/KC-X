@@ -1,0 +1,66 @@
+# The image build. The deploy is docker compose on Unraid (rockinator), in the
+# gitops repository (docker/rockinator/kcx.yaml); deploy/docker-compose.yaml here
+# is the generic version of it.
+#
+# Same shape as the other services: SAST, then podman builds and pushes the
+# image. main builds :latest; a git tag builds :<tag> and moves :latest with it.
+# $REGISTRY, $REGISTRY_USER and $REGISTRY_PASSWORD come from the GitLab group,
+# not from this file.
+#
+# Question validation and pytest run on GitHub Actions (.github/workflows/ci.yml).
+# The image is the Dockerfile's default (last) target, runtime: no pytest, no tests.
+
+include:
+  - template: Security/SAST.gitlab-ci.yml
+
+variables:
+  IMAGE_NAME: kcx
+
+stages:
+  - test
+  - build
+
+sast:
+  stage: test
+
+# What the image is built from. A push to main that touches none of these - a
+# docs, roadmap or kcx.sh edit - leaves the image as it was, so it is not
+# rebuilt and pushed for nothing. The list is what .dockerignore lets into the
+# runtime image, plus the two files that shape the build and this one.
+.image_sources: &image_sources
+  - kcx/**/*
+  - certs/**/*
+  - questions/**/*
+  - scripts/**/*
+  - requirements.txt
+  - Dockerfile
+  - .dockerignore
+  - .gitlab-ci.yml
+
+build latest:
+  stage: build
+  image: quay.io/podman/stable
+  variables:
+    FULL_IMAGE: $REGISTRY/$IMAGE_NAME:latest
+  script:
+    - podman login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $REGISTRY
+    - podman build --pull -t $FULL_IMAGE .
+    - podman push $FULL_IMAGE
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      changes: *image_sources
+
+# A tag always builds, whatever it touched: a release is a release.
+build release:
+  stage: build
+  image: quay.io/podman/stable
+  variables:
+    FULL_IMAGE: $REGISTRY/$IMAGE_NAME:$CI_COMMIT_TAG
+    LATEST_IMAGE: $REGISTRY/$IMAGE_NAME:latest
+  script:
+    - podman login -u $REGISTRY_USER -p $REGISTRY_PASSWORD $REGISTRY
+    - podman build --pull -t $FULL_IMAGE -t $LATEST_IMAGE .
+    - podman push $FULL_IMAGE
+    - podman push $LATEST_IMAGE
+  rules:
+    - if: $CI_COMMIT_TAG

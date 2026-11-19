@@ -4,3 +4,9 @@
 .pytest_cache
 *.db
 docs
+.github
+.gitlab-ci.yml
+.claude
+deploy
+*.md
+kcx.sh

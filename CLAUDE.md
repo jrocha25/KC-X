@@ -20,6 +20,12 @@ The image copies code, questions and tests at build time (no bind mount), so pas
 - Validate questions: `docker compose run --rm --build kcx python scripts/validate_questions.py [questions/kcna]`
 - Tests: `docker compose run --rm --build kcx pytest` (single test: append `tests/test_bank.py::test_bank_matches_blueprint`)
 - Link check (network): `docker compose run --rm kcx python scripts/check_links.py [questions/kcsa]`
+- The Dockerfile has two targets: `runtime` (default, last stage, no pytest/tests) is what GitLab CI (`.gitlab-ci.yml`) pushes to `reg.joao-rocha.com/kcx` and the homelab runs; `test` adds pytest and `tests/`, and the local `compose.yaml` builds it. Keep both working.
+
+## Deploy
+
+- Push to the `gitlab` remote (`personal-projects/kc-x`) to build: `main` builds `:latest` when image sources change, and a git tag builds `:<tag>` and moves `:latest`. `origin` (GitHub) runs `.github/workflows/ci.yml`.
+- The live compose file is `docker/rockinator/kcx.yaml` in the gitops repo (LAN port 3350). `deploy/docker-compose.yaml` is the generic copy. Never add a public route: the app has no auth.
 
 ## Question banks
 

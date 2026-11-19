@@ -41,6 +41,26 @@ Then open <http://localhost:8080>. The server runs in the background; `./kcx.sh 
 
 After editing questions or code, run `./kcx.sh restart` so the image is rebuilt.
 
+## Deploy (homelab)
+
+The Dockerfile has two targets. `runtime` is the default (last) stage: the app only, no pytest or tests.
+`test` adds those, and the local `compose.yaml` uses it.
+
+- **Build:** GitLab CI (`.gitlab-ci.yml`) builds `runtime` with podman and pushes it to the private registry.
+  A push to `main` that changes the image sources builds `reg.joao-rocha.com/kcx:latest`.
+  A git tag (e.g. `1.0.0`) builds `:1.0.0` and moves `:latest`. The pipeline runs in the `gitlab` remote
+  (`personal-projects/kc-x`), which needs the group's `REGISTRY`, `REGISTRY_USER` and `REGISTRY_PASSWORD` variables.
+- **Run:** `deploy/docker-compose.yaml` is the generic compose file (named volume, port 3350).
+  The live copy for the Unraid server is `docker/rockinator/kcx.yaml` in the gitops repo.
+  It bind-mounts `/mnt/user/appdata/kcx/data`, which must be owned by the container user first:
+
+  ```bash
+  mkdir -p /mnt/user/appdata/kcx/data && chown 1000:1000 /mnt/user/appdata/kcx/data
+  docker compose -f kcx.yaml pull && docker compose -f kcx.yaml up -d
+  ```
+
+KC-X has no authentication, and anyone who can reach it can wipe the history. Publish it on the LAN only.
+
 ## Exam coverage
 
 | Cert | Domains (weight) | Questions in bank |
@@ -60,7 +80,9 @@ scripts/        validate_questions.py, check_links.py
 tests/          pytest suite
 docs/           roadmap, architecture, question format, blueprints
 kcx.sh          start/stop helper (wraps docker compose)
-.github/        CI workflow
+deploy/         homelab compose file (runs the registry image)
+.github/        CI workflow (validator, pytest, docker build, links)
+.gitlab-ci.yml  image build and push to the private registry
 ```
 
 ## Documentation

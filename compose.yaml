@@ -1,6 +1,8 @@
 services:
   kcx:
-    build: .
+    build:
+      context: .
+      target: test   # runtime + pytest/tests; the homelab runs the slim default target
     image: kcx:local
     ports:
       - "127.0.0.1:8080:8080"   # local only; the app has no auth
