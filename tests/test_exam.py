@@ -43,16 +43,16 @@ def test_exam_covers_every_topic(conn, app_bank):
         db.delete_history(conn)
 
 
-def test_consecutive_exams_do_not_repeat_and_fifth_reuses_oldest(conn, app_bank):
+def test_consecutive_exams_do_not_repeat_and_sixth_reuses_oldest(conn, app_bank):
     cert = app_bank.certs["kcna"]
     rng = random.Random(7)
-    attempts = [exam.build_exam(conn, app_bank, cert, rng=rng, now=T0 + timedelta(hours=h)) for h in range(5)]
-    q1, q2, q3, q4, q5 = (set(_qids(conn, a)) for a in attempts)
-    first_four = [q1, q2, q3, q4]
-    # KCNA bank is 4x the exam: four exams, no repeats
-    assert all(not (a & b) for i, a in enumerate(first_four) for b in first_four[i + 1:])
-    assert q1 | q2 | q3 | q4 == {q.id for q in app_bank.questions["kcna"]}
-    assert q5 == q1                             # least recently served come back first
+    attempts = [exam.build_exam(conn, app_bank, cert, rng=rng, now=T0 + timedelta(hours=h)) for h in range(6)]
+    q1, q2, q3, q4, q5, q6 = (set(_qids(conn, a)) for a in attempts)
+    first_five = [q1, q2, q3, q4, q5]
+    # KCNA bank is 5x the exam: five exams, no repeats
+    assert all(not (a & b) for i, a in enumerate(first_five) for b in first_five[i + 1:])
+    assert q1 | q2 | q3 | q4 | q5 == {q.id for q in app_bank.questions["kcna"]}
+    assert q6 == q1                             # least recently served come back first
 
 
 def test_exam_order_is_shuffled(conn, app_bank):

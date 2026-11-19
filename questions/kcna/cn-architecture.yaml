@@ -1,8 +1,8 @@
-# KCNA — Cloud Native Architecture (12%) — 28 questions
-# Topics: observability 12 · ecosystem-principles 11 · community-collaboration 5
+# KCNA — Cloud Native Architecture (12%) — 35 questions
+# Topics: observability 15 · ecosystem-principles 14 · community-collaboration 6
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# ---------------------------------------------------------------- observability (12)
+# ---------------------------------------------------------------- observability (15)
 
 - id: kcna-ca-001
   domain: cn-architecture
@@ -249,7 +249,64 @@
   references:
     - https://kubernetes.io/docs/concepts/cluster-administration/kube-state-metrics/
 
-# --------------------------------------------------------- ecosystem-principles (11)
+- id: kcna-ca-030
+  domain: cn-architecture
+  topic: observability
+  difficulty: easy
+  question: >
+    Which Prometheus metric type fits a value that can go up and down, such as current
+    memory use or the length of a queue?
+  options:
+    A: Counter
+    B: Gauge
+    C: Histogram
+    D: Summary
+  answer: B
+  explanation: >
+    A gauge is a single number that can rise and fall. A counter only increases (or resets
+    on restart), and histograms and summaries sample observations such as request durations
+    into buckets or quantiles.
+  references:
+    - https://prometheus.io/docs/concepts/metric_types/
+
+- id: kcna-ca-031
+  domain: cn-architecture
+  topic: observability
+  difficulty: medium
+  question: Which statement correctly distinguishes an SLI, an SLO and an SLA?
+  options:
+    A: "SLI: a target; SLO: a measurement; SLA: an internal goal"
+    B: "SLI: a measurement; SLO: a target for it; SLA: a contract"
+    C: "SLI: a contract; SLO: a measurement; SLA: a target for it"
+    D: "SLI: a measurement; SLO: a contract; SLA: a target for it"
+  answer: B
+  explanation: >
+    A service level indicator is a measured value, such as the share of successful
+    requests. An objective is the target for that indicator, for example 99.9%. An
+    agreement is a contract with users that states the consequences of missing the
+    objectives.
+  references:
+    - https://sre.google/sre-book/service-level-objectives/
+
+- id: kcna-ca-032
+  domain: cn-architecture
+  topic: observability
+  difficulty: easy
+  question: In distributed tracing, what is a span?
+  options:
+    A: "A single operation in a trace, with a start and end time"
+    B: "The complete set of log lines a service writes for a request"
+    C: "The time window that a Prometheus query aggregates over"
+    D: "A sampled subset of the metrics that a service exports"
+  answer: A
+  explanation: >
+    A trace is made of spans. Each span is one unit of work, such as an HTTP call or a
+    database query, with timing, attributes and a link to its parent span. Logs and
+    metrics are separate signals.
+  references:
+    - https://opentelemetry.io/docs/concepts/signals/traces/
+
+# --------------------------------------------------------- ecosystem-principles (14)
 
 - id: kcna-ca-007
   domain: cn-architecture
@@ -475,7 +532,70 @@
     - https://glossary.cncf.io/stateless-apps/
     - https://12factor.net/processes
 
-# ---------------------------------------------------- community-collaboration (5)
+- id: kcna-ca-033
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: medium
+  question: >
+    A team wants Deployments to scale on the length of a message queue, including down to
+    zero replicas when the queue is empty. Which CNCF project is built for this?
+  options:
+    A: Argo Rollouts
+    B: KEDA
+    C: Cluster Autoscaler
+    D: Vertical Pod Autoscaler
+  answer: B
+  explanation: >
+    KEDA (Kubernetes Event-driven Autoscaling) scales workloads on external event sources
+    such as queues and streams, and it can scale them to zero. It works together with the
+    HorizontalPodAutoscaler. Argo Rollouts handles progressive delivery, the Cluster
+    Autoscaler scales nodes, and the VPA resizes Pods.
+  references:
+    - https://keda.sh/
+    - https://kubernetes.io/docs/concepts/workloads/autoscaling/
+
+- id: kcna-ca-034
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: easy
+  question: >
+    Which cloud native property describes a system that detects failures and recovers
+    without human help, for example by restarting failed containers?
+  options:
+    A: Self-healing
+    B: Immutability
+    C: Portability
+    D: Observability
+  answer: A
+  explanation: >
+    A self-healing system uses a control loop that compares the actual state with the
+    desired state and corrects differences, such as replacing failed Pods. Immutability is
+    about replacing instead of changing components, portability about running anywhere,
+    and observability about understanding a system from its outputs.
+  references:
+    - https://glossary.cncf.io/self-healing/
+
+- id: kcna-ca-035
+  domain: cn-architecture
+  topic: ecosystem-principles
+  difficulty: medium
+  question: Why do the CRI, CNI and CSI interfaces matter to Kubernetes users?
+  options:
+    A: "They are paid add-ons sold by cloud providers for Kubernetes"
+    B: "They replace the kube-apiserver for runtime, network and storage"
+    C: "They define one encrypted protocol that all Pods must use"
+    D: "They let vendors plug in without changing Kubernetes itself"
+  answer: D
+  explanation: >
+    These open interfaces let container runtimes, network plugins and storage drivers be
+    developed and swapped independently of Kubernetes' own code. This avoids lock-in and
+    keeps the core small. They are open specifications, not paid products, and they don't
+    replace the API server.
+  references:
+    - https://kubernetes.io/docs/concepts/extend-kubernetes/
+    - https://kubernetes.io/docs/concepts/architecture/cri/
+
+# ---------------------------------------------------- community-collaboration (6)
 
 - id: kcna-ca-012
   domain: cn-architecture
@@ -569,3 +689,22 @@
   references:
     - https://kubernetes.io/releases/
     - https://kubernetes.io/releases/patch-releases/#support-period
+
+- id: kcna-ca-036
+  domain: cn-architecture
+  topic: community-collaboration
+  difficulty: easy
+  question: Which organization is the parent of the CNCF, the foundation that hosts Kubernetes?
+  options:
+    A: The Apache Software Foundation
+    B: The Open Container Initiative
+    C: The Linux Foundation
+    D: The Eclipse Foundation
+  answer: C
+  explanation: >
+    The Cloud Native Computing Foundation is part of the Linux Foundation and is the
+    vendor-neutral home of Kubernetes. The OCI is a separate Linux
+    Foundation project for container standards, and Apache and Eclipse are unrelated
+    foundations.
+  references:
+    - https://www.cncf.io/about/who-we-are/

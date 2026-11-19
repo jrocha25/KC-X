@@ -1,8 +1,8 @@
-# KCNA — Cloud Native Application Delivery (16%) — 40 questions
-# Topics: application-delivery 27 · debugging 13
+# KCNA — Cloud Native Application Delivery (16%) — 50 questions
+# Topics: application-delivery 34 · debugging 16
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# --------------------------------------------------------- application-delivery (27)
+# --------------------------------------------------------- application-delivery (34)
 
 - id: kcna-ad-001
   domain: app-delivery
@@ -536,7 +536,143 @@
   references:
     - https://kubernetes.io/docs/concepts/overview/working-with-objects/object-management/
 
-# -------------------------------------------------------------------- debugging (13)
+- id: kcna-ad-048
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: Which command installs the chart bitnami/nginx as a release named web?
+  options:
+    A: helm install bitnami/nginx web
+    B: helm install web bitnami/nginx
+    C: helm create web bitnami/nginx
+    D: helm deploy web --chart bitnami/nginx
+  answer: B
+  explanation: >
+    The syntax is helm install [NAME] [CHART], so the release name comes first and the
+    chart second. helm create scaffolds a new chart directory, and Helm has no deploy
+    command.
+  references:
+    - https://helm.sh/docs/helm/helm_install/
+    - https://helm.sh/docs/intro/using_helm/
+
+- id: kcna-ad-049
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    You run helm install shop ./chart -f prod.yaml --set replicaCount=5. prod.yaml sets
+    replicaCount to 3, and the chart's values.yaml sets it to 1. Which value is used?
+  options:
+    A: "1"
+    B: "3"
+    C: "5"
+    D: "The install fails because the values conflict"
+  answer: C
+  explanation: >
+    Helm merges values in order of specificity. The chart's values.yaml is the default, a
+    file passed with -f overrides it, and --set overrides both. Conflicting values are
+    normal and are resolved by this order, not rejected.
+  references:
+    - https://helm.sh/docs/chart_template_guide/values_files/
+
+- id: kcna-ad-050
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: Argo CD shows an Application as OutOfSync. What does this mean?
+  options:
+    A: "The Argo CD server has lost its connection to the cluster"
+    B: "The application's Pods are failing their readiness probes"
+    C: "The Git repository has more than one branch with manifests"
+    D: "The live cluster state differs from the target state in Git"
+  answer: D
+  explanation: >
+    Sync status compares the live state in the cluster with the target state in Git.
+    OutOfSync means they differ, and a sync applies the Git state. Failing Pods affect the
+    separate health status, not the sync status.
+  references:
+    - https://argo-cd.readthedocs.io/en/stable/core_concepts/
+
+- id: kcna-ad-051
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    A Deployment's Pods keep running out of memory. Each Pod needs more memory, not more
+    Pods. Which autoscaler adjusts the resource requests of each Pod?
+  options:
+    A: HorizontalPodAutoscaler
+    B: VerticalPodAutoscaler
+    C: Cluster Autoscaler
+    D: KEDA ScaledObject
+  answer: B
+  explanation: >
+    The VerticalPodAutoscaler (an add-on) adjusts CPU and memory requests based on actual
+    usage. The HorizontalPodAutoscaler and KEDA change the number of replicas, and the
+    Cluster Autoscaler adds or removes nodes.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/autoscaling/
+
+- id: kcna-ad-052
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    A Deployment with 4 replicas uses RollingUpdate with maxUnavailable set to 0 and
+    maxSurge set to 1. How does the rollout proceed?
+  options:
+    A: "It stops one old Pod first, then starts a new Pod in its place"
+    B: "It replaces all four Pods at once, when the new ones are ready"
+    C: "It pauses until an operator approves each new Pod manually"
+    D: "It adds one new Pod and removes an old one once that is ready"
+  answer: D
+  explanation: >
+    maxUnavailable 0 means the number of available Pods may never drop below 4, and
+    maxSurge 1 allows one extra Pod. The controller starts one new Pod, waits until it is
+    ready, removes one old Pod, and repeats. Rolling updates need no manual approval.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#rolling-update-deployment
+
+- id: kcna-ad-053
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: medium
+  question: >
+    You want to make several changes to the Deployment web and roll them out together,
+    instead of starting one rollout per change. Which commands help?
+  options:
+    A: "kubectl rollout pause, then kubectl rollout resume"
+    B: "kubectl rollout undo, then kubectl rollout restart"
+    C: "kubectl scale --replicas=0, then kubectl apply"
+    D: "kubectl rollout status, then kubectl rollout history"
+  answer: A
+  explanation: >
+    While a Deployment is paused, changes to its Pod template do not trigger a rollout.
+    After kubectl rollout resume, a single rollout applies all of them. Scaling to zero
+    causes downtime, and status, history, undo and restart don't batch changes.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#pausing-and-resuming-a-deployment
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_rollout/kubectl_rollout_pause/
+
+- id: kcna-ad-054
+  domain: app-delivery
+  topic: application-delivery
+  difficulty: easy
+  question: In a cloud native delivery pipeline, what does "shift left" mean?
+  options:
+    A: "Moving workloads from cloud regions to on-premises nodes"
+    B: "Rolling back to the previous release when an error occurs"
+    C: "Running tests and security checks earlier in development"
+    D: "Deploying to production first and to staging environments later"
+  answer: C
+  explanation: >
+    Seeing the lifecycle as a line from left (code) to right (production), shift left
+    means doing testing, security and other checks earlier, where problems are cheaper to
+    fix. It is not about where workloads run or about rollbacks.
+  references:
+    - https://glossary.cncf.io/shift-left/
+
+# -------------------------------------------------------------------- debugging (16)
 
 - id: kcna-ad-014
   domain: app-delivery
@@ -807,3 +943,63 @@
   references:
     - https://kubernetes.io/docs/reference/kubectl/
     - https://kubernetes.io/docs/tasks/debug/debug-application/debug-running-pod/
+
+- id: kcna-ad-055
+  domain: app-delivery
+  topic: debugging
+  difficulty: easy
+  question: >
+    You suspect that the container in the Pod web-1 did not get the expected environment
+    variables. Which command prints the environment as the running process sees it?
+  options:
+    A: kubectl logs web-1 --env
+    B: kubectl get pod web-1 --env
+    C: kubectl exec web-1 -- env
+    D: kubectl describe env web-1
+  answer: C
+  explanation: >
+    kubectl exec runs a command inside the running container, and env prints that
+    process's environment. kubectl logs and kubectl get have no --env flag, and env is not
+    a resource type you can describe.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-application/get-shell-running-container/
+
+- id: kcna-ad-056
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: >
+    You cannot SSH into a node that has a problem. Which command starts a Pod on that node
+    with an interactive shell and the node's root filesystem mounted at /host?
+  options:
+    A: "kubectl exec node/worker-1 -it -- sh"
+    B: "kubectl debug node/worker-1 -it --image=busybox"
+    C: "kubectl attach node/worker-1 -it"
+    D: "kubectl run debug -it --image=busybox --node=worker-1"
+  answer: B
+  explanation: >
+    kubectl debug node/<name> creates a debugging Pod on that node. It runs in the host's
+    IPC, network and PID namespaces and mounts the node's root filesystem at /host. exec
+    and attach only work on containers, and kubectl run has no --node flag.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-cluster/kubectl-node-debug/
+
+- id: kcna-ad-057
+  domain: app-delivery
+  topic: debugging
+  difficulty: medium
+  question: >
+    kubectl get pods shows web-1 with STATUS Init:CrashLoopBackOff. Its init container is
+    named migrate. Which command shows why it fails?
+  options:
+    A: kubectl logs web-1 -c app
+    B: kubectl rollout status pod/web-1
+    C: kubectl logs deployment/web
+    D: kubectl logs web-1 -c migrate
+  answer: D
+  explanation: >
+    Init containers have their own logs, which you select by name with -c. The status
+    shows that the init container keeps failing, so the app container has not started and
+    has no useful logs. kubectl rollout status does not work on Pods.
+  references:
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-init-containers/

@@ -1,8 +1,8 @@
-# KCNA — Container Orchestration (28%) — 68 questions
-# Topics: networking 20 · security 19 · troubleshooting 13 · storage 16
+# KCNA — Container Orchestration (28%) — 85 questions
+# Topics: networking 25 · security 24 · troubleshooting 16 · storage 20
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# ------------------------------------------------------------------- networking (20)
+# ------------------------------------------------------------------- networking (25)
 
 - id: kcna-co-001
   domain: container-orchestration
@@ -403,7 +403,106 @@
     - https://kubernetes.io/docs/concepts/services-networking/service/
     - https://kubernetes.io/docs/reference/networking/virtual-ips/
 
-# --------------------------------------------------------------------- security (19)
+- id: kcna-co-082
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: By default, how does a Service of type LoadBalancer relate to the other Service types?
+  options:
+    A: "It also gets a ClusterIP and node ports that the cloud LB uses"
+    B: "It replaces kube-proxy, so the LB sends traffic straight to Pods"
+    C: "It only works with a headless Service that has no ClusterIP"
+    D: "It needs an Ingress controller to create its external IP"
+  answer: A
+  explanation: >
+    A LoadBalancer Service builds on the other types. Kubernetes first sets it up like a
+    NodePort Service (which also has a ClusterIP), and then the cloud-controller-manager
+    configures an external load balancer that forwards to it. kube-proxy still runs, and
+    no Ingress controller is involved.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer
+
+- id: kcna-co-083
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: >
+    In the role-oriented design of the Gateway API, who typically manages the
+    GatewayClass, the Gateway and the HTTPRoute, in that order?
+  options:
+    A: "App developer; cluster operator; infrastructure provider"
+    B: "Infrastructure provider; cluster operator; app developer"
+    C: "Cluster operator; app developer; infrastructure provider"
+    D: "Infrastructure provider; app developer; cluster operator"
+  answer: B
+  explanation: >
+    The infrastructure provider (for example a cloud provider) offers a GatewayClass. A
+    cluster operator creates a Gateway from it, and application developers attach
+    HTTPRoutes to that Gateway to route traffic to their Services. Splitting the resources
+    this way lets each role manage only its own part.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/gateway/
+    - https://gateway-api.sigs.k8s.io/
+
+- id: kcna-co-084
+  domain: container-orchestration
+  topic: networking
+  difficulty: hard
+  question: >
+    A StatefulSet named db in the namespace data uses the headless Service db-svc. The
+    cluster domain is cluster.local. Which DNS name resolves to its first Pod?
+  options:
+    A: "db.db-svc-0.data.svc.cluster.local"
+    B: "db-svc-0.data.svc.cluster.local"
+    C: "db-0.db-svc.data.svc.cluster.local"
+    D: "db-0.data.pod.cluster.local"
+  answer: C
+  explanation: >
+    StatefulSet Pods are named <statefulset>-<ordinal>, so the first one is db-0. Each Pod
+    gets the DNS name <pod>.<governing service>.<namespace>.svc.<cluster domain>, where
+    the governing Service is the headless Service named in serviceName.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#stable-network-id
+
+- id: kcna-co-085
+  domain: container-orchestration
+  topic: networking
+  difficulty: medium
+  question: >
+    A legacy application needs all requests from the same client IP to reach the same
+    backend Pod. Which Service setting provides this?
+  options:
+    A: "spec.externalTrafficPolicy: Local"
+    B: "spec.internalTrafficPolicy: Local"
+    C: "spec.publishNotReadyAddresses: true"
+    D: "spec.sessionAffinity: ClientIP"
+  answer: D
+  explanation: >
+    Setting sessionAffinity to ClientIP (the default is None) sends connections from a
+    given client IP to the same Pod. The traffic policies only control whether traffic
+    stays on the local node, and publishNotReadyAddresses includes Pods that are not ready.
+  references:
+    - https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity
+
+- id: kcna-co-086
+  domain: container-orchestration
+  topic: networking
+  difficulty: easy
+  question: By default, from which port range does Kubernetes allocate the port of a NodePort Service?
+  options:
+    A: "1-1023"
+    B: "8000-8999"
+    C: "30000-32767"
+    D: "49152-65535"
+  answer: C
+  explanation: >
+    The control plane allocates node ports from the range set by the API server's
+    --service-node-port-range flag, which defaults to 30000-32767. 1-1023 are the
+    privileged well-known ports, and 49152-65535 is the usual ephemeral client range.
+  references:
+    - https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport
+
+# --------------------------------------------------------------------- security (24)
 
 - id: kcna-co-011
   domain: container-orchestration
@@ -786,7 +885,111 @@
   references:
     - https://kubernetes.io/docs/concepts/configuration/secret/
 
-# -------------------------------------------------------------- troubleshooting (13)
+- id: kcna-co-087
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    A ClusterRole named pod-reader allows reading Pods. You bind it to the user jane with a
+    RoleBinding in the namespace dev. What can jane do?
+  options:
+    A: "Read Pods in every namespace of the cluster"
+    B: "Read Pods only in the namespace dev"
+    C: "Nothing, as a RoleBinding cannot use a ClusterRole"
+    D: "Read Pods in dev and in kube-system"
+  answer: B
+  explanation: >
+    A RoleBinding may reference a ClusterRole. The permissions are then granted only
+    inside the RoleBinding's namespace. This lets you define common roles once and reuse
+    them per namespace. A ClusterRoleBinding would grant them in every namespace.
+  references:
+    - https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding
+
+- id: kcna-co-088
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    A Pod never calls the Kubernetes API. Which Pod setting stops Kubernetes from
+    mounting a ServiceAccount token into it?
+  options:
+    A: "automountServiceAccountToken: false"
+    B: "serviceAccountName: none"
+    C: "securityContext.readOnlyRootFilesystem: true"
+    D: "enableServiceLinks: false"
+  answer: A
+  explanation: >
+    Setting automountServiceAccountToken to false in the Pod spec (or on the
+    ServiceAccount) stops the API credentials from being injected, which reduces risk if
+    the container is compromised. There is no ServiceAccount named none by default,
+    readOnlyRootFilesystem affects the container's filesystem, and enableServiceLinks
+    controls Service environment variables.
+  references:
+    - https://kubernetes.io/docs/concepts/security/service-accounts/
+    - https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+
+- id: kcna-co-089
+  domain: container-orchestration
+  topic: security
+  difficulty: easy
+  question: A Pod is created without spec.serviceAccountName. Which ServiceAccount does it use?
+  options:
+    A: "A new ServiceAccount created and named after the Pod"
+    B: "The cluster-admin ServiceAccount in kube-system"
+    C: "None; such a Pod has no identity for the API"
+    D: "The ServiceAccount named default in its namespace"
+  answer: D
+  explanation: >
+    Kubernetes creates a ServiceAccount named default in every namespace and assigns it to
+    Pods that do not name one. By default it has no permissions beyond API discovery, so
+    workloads that need access should get their own ServiceAccount with only the RBAC they
+    need.
+  references:
+    - https://kubernetes.io/docs/concepts/security/service-accounts/#default-service-accounts
+
+- id: kcna-co-090
+  domain: container-orchestration
+  topic: security
+  difficulty: medium
+  question: >
+    Secrets are stored in etcd base64-encoded but not encrypted. Which built-in control
+    protects them if someone copies the etcd data files?
+  options:
+    A: "Base64-encoding the values twice before creating the Secret"
+    B: "Marking each Secret immutable so its data cannot be changed"
+    C: "Turning on encryption at rest in the kube-apiserver"
+    D: "Storing the values in a ConfigMap with a restricted label"
+  answer: C
+  explanation: >
+    The kube-apiserver can encrypt Secret data before writing it to etcd, using an
+    encryption configuration (for example with a KMS provider). Base64 is an encoding, not
+    encryption, immutability only blocks changes, and ConfigMaps are meant for
+    non-confidential data.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/
+    - https://kubernetes.io/docs/concepts/configuration/secret/
+
+- id: kcna-co-091
+  domain: container-orchestration
+  topic: security
+  difficulty: easy
+  question: Why is running a container with securityContext.privileged set to true risky?
+  options:
+    A: "It publishes the container's image to a public registry"
+    B: "It gives the container almost full access to the host"
+    C: "It lets the container skip its CPU and memory limits"
+    D: "It exposes every container port on the node's IP address"
+  answer: B
+  explanation: >
+    A privileged container disables most isolation mechanisms. It gets access to the
+    host's devices and nearly all kernel capabilities, so a compromise can easily spread to
+    the node. The Baseline and Restricted Pod Security Standards forbid it. It has no
+    effect on images, resource limits or ports.
+  references:
+    - https://kubernetes.io/docs/concepts/security/pod-security-standards/
+    - https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+
+# -------------------------------------------------------------- troubleshooting (16)
 
 - id: kcna-co-020
   domain: container-orchestration
@@ -1053,7 +1256,71 @@
     - https://kubernetes.io/docs/concepts/storage/persistent-volumes/
     - https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/
 
-# ----------------------------------------------------------------------- storage (16)
+- id: kcna-co-092
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    A Pod stays Pending with the event "0/4 nodes are available: 4 node(s) didn't match
+    Pod's node affinity/selector". What is the most likely cause?
+  options:
+    A: "No node has the labels its node selector or affinity needs"
+    B: "All four nodes carry a taint that the Pod does not tolerate"
+    C: "The Pod requests more CPU than any node has available"
+    D: "The PersistentVolumeClaim it uses has not been bound yet"
+  answer: A
+  explanation: >
+    The message means that the Pod's nodeSelector or required node affinity matches the
+    labels of none of the nodes. Fix the labels on the nodes or the rule in the Pod. Taints,
+    insufficient CPU and unbound PVCs each produce their own, different scheduling messages.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/
+    - https://kubernetes.io/docs/tasks/debug/debug-application/debug-pods/
+
+- id: kcna-co-093
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    A new Pod shows the status CreateContainerConfigError, and kubectl describe reports
+    that the ConfigMap app-config was not found. What should you do?
+  options:
+    A: "Increase the Pod's memory limit and redeploy it"
+    B: "Pull the image again with imagePullPolicy set to Always"
+    C: "Add a toleration so the Pod can run on another node"
+    D: "Create the ConfigMap app-config in the Pod's namespace"
+  answer: D
+  explanation: >
+    The kubelet cannot build the container's configuration because a required ConfigMap
+    it references does not exist. The ConfigMap must exist in the same namespace as the
+    Pod, unless the reference is marked optional. Memory, image pulls and tolerations are
+    unrelated to this error.
+  references:
+    - https://kubernetes.io/docs/tasks/configure-pod-container/configure-pod-configmap/
+    - https://kubernetes.io/docs/concepts/configuration/configmap/
+
+- id: kcna-co-094
+  domain: container-orchestration
+  topic: troubleshooting
+  difficulty: medium
+  question: >
+    Several Pods on worker-2 show the status Evicted, and the node reports the condition
+    DiskPressure. What happened?
+  options:
+    A: "The kubelet evicted Pods to reclaim disk space on the node"
+    B: "The scheduler moved the Pods to balance disk usage"
+    C: "The PVCs of the Pods were deleted by their reclaim policy"
+    D: "The API server removed Pods that exceeded a ResourceQuota"
+  answer: A
+  explanation: >
+    When free disk space or inodes on a node fall below an eviction threshold, the kubelet
+    sets DiskPressure and proactively ends Pods to reclaim resources (node-pressure
+    eviction). The scheduler never moves running Pods, and ResourceQuota is enforced when
+    objects are created, not by evicting Pods.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/node-pressure-eviction/
+
+# ----------------------------------------------------------------------- storage (20)
 
 - id: kcna-co-027
   domain: container-orchestration
@@ -1368,3 +1635,83 @@
     volume provides read-only configuration.
   references:
     - https://kubernetes.io/docs/concepts/storage/volumes/#emptydir
+
+- id: kcna-co-095
+  domain: container-orchestration
+  topic: storage
+  difficulty: easy
+  question: A PersistentVolume has the reclaim policy Retain. What happens when its PVC is deleted?
+  options:
+    A: "The volume and its data are deleted automatically"
+    B: "The data is wiped and the PV becomes available again"
+    C: "The PV and its data stay until an admin cleans up"
+    D: "The PV is moved to another StorageClass for reuse"
+  answer: C
+  explanation: >
+    With Retain, the PV is released but kept, together with its data, and it is not
+    offered to new claims. An administrator must reclaim it manually. Delete removes the
+    PV and the underlying storage, and the old Recycle policy (wipe and reuse) is
+    deprecated.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/#reclaiming
+
+- id: kcna-co-096
+  domain: container-orchestration
+  topic: storage
+  difficulty: easy
+  question: >
+    Pods on several different nodes must mount the same volume and write to it at the same
+    time. Which access mode is needed?
+  options:
+    A: ReadWriteOnce
+    B: ReadOnlyMany
+    C: ReadWriteOncePod
+    D: ReadWriteMany
+  answer: D
+  explanation: >
+    ReadWriteMany lets the volume be mounted read-write by many nodes at once, which needs
+    storage that supports it, such as NFS. ReadWriteOnce allows a single node,
+    ReadWriteOncePod a single Pod, and ReadOnlyMany is read-only.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+
+- id: kcna-co-097
+  domain: container-orchestration
+  topic: storage
+  difficulty: medium
+  question: >
+    A database's PVC is almost full. Which setting must be enabled for you to grow it by
+    raising the PVC's requested storage size?
+  options:
+    A: "The PVC's access mode must be changed to ReadWriteMany"
+    B: "allowVolumeExpansion must be true in its StorageClass"
+    C: "The PV's reclaim policy must be changed to Retain first"
+    D: "The Pod using the PVC must set a larger memory limit"
+  answer: B
+  explanation: >
+    A PVC can be expanded only when its StorageClass sets allowVolumeExpansion to true (and
+    the driver supports it). You then edit the PVC to request more storage. Access modes,
+    reclaim policies and Pod memory limits do not control volume expansion.
+  references:
+    - https://kubernetes.io/docs/concepts/storage/persistent-volumes/#expanding-persistent-volumes-claims
+    - https://kubernetes.io/docs/concepts/storage/storage-classes/
+
+- id: kcna-co-098
+  domain: container-orchestration
+  topic: storage
+  difficulty: hard
+  question: >
+    You update a ConfigMap. One Pod consumes it as a mounted volume, and another consumes
+    it as environment variables. Neither Pod is restarted. What happens?
+  options:
+    A: "Both Pods see the new values within about a minute"
+    B: "Neither Pod sees the new values until it is restarted"
+    C: "The mounted files update eventually; env vars keep old values"
+    D: "The env vars update at once; the mounted files keep old values"
+  answer: C
+  explanation: >
+    The kubelet periodically syncs mounted ConfigMaps, so the files change after a short
+    delay (unless they are mounted with subPath). Environment variables are set when the
+    container starts and need a Pod restart to change.
+  references:
+    - https://kubernetes.io/docs/concepts/configuration/configmap/#mounted-configmaps-are-updated-automatically

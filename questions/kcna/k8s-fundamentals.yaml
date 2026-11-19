@@ -1,8 +1,8 @@
-# KCNA — Kubernetes Fundamentals (44%) — 104 questions
-# Topics: core-concepts 36 · administration 23 · scheduling 21 · containerization 24
+# KCNA — Kubernetes Fundamentals (44%) — 130 questions
+# Topics: core-concepts 45 · administration 29 · scheduling 26 · containerization 30
 # Original questions. Not taken from any real exam. See docs/QUESTION_FORMAT.md.
 
-# ---------------------------------------------------------------- core-concepts (36)
+# ---------------------------------------------------------------- core-concepts (45)
 
 - id: kcna-kf-001
   domain: k8s-fundamentals
@@ -702,7 +702,186 @@
     - https://kubernetes.io/docs/concepts/architecture/control-plane-node-communication/
     - https://kubernetes.io/docs/concepts/overview/components/
 
-# --------------------------------------------------------------- administration (23)
+- id: kcna-kf-115
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: A Pod manifest does not set spec.restartPolicy. Which restart policy does the Pod get?
+  options:
+    A: OnFailure
+    B: Never
+    C: Always
+    D: UnlessStopped
+  answer: C
+  explanation: >
+    The Pod restartPolicy can be Always, OnFailure or Never, and the default is Always. Jobs
+    usually set OnFailure or Never so finished containers are not restarted. UnlessStopped
+    is a Docker restart policy, not a Kubernetes one.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/
+
+- id: kcna-kf-116
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: Which apiVersion do Pod, Service, ConfigMap and Namespace objects use?
+  options:
+    A: v1
+    B: apps/v1
+    C: core/v1
+    D: batch/v1
+  answer: A
+  explanation: >
+    These kinds belong to the core (legacy) API group, which has no group name in its
+    apiVersion, so it is written simply as v1. apps/v1 holds workloads such as Deployments
+    and StatefulSets, and batch/v1 holds Jobs and CronJobs. core/v1 is not a valid apiVersion.
+  references:
+    - https://kubernetes.io/docs/reference/using-api/#api-groups
+
+- id: kcna-kf-117
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    Two teams deploy into the namespaces team-a and team-b of the same cluster. With no
+    other configuration, what do the namespaces give them?
+  options:
+    A: "Separate Pod networks that block traffic between them"
+    B: "Separate name scopes, but Pods can still talk across them"
+    C: "Dedicated nodes, so each team's Pods run on its own machines"
+    D: "Separate control planes, each with its own API server"
+  answer: B
+  explanation: >
+    Namespaces provide a scope for names - the same name can be used in different
+    namespaces - and a unit for RBAC, quotas and policies. They do not isolate the network
+    (that needs NetworkPolicies), nodes (that needs scheduling rules) or the control plane,
+    which all namespaces share.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/
+
+- id: kcna-kf-118
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    You delete a ReplicaSet with kubectl delete and default options, and its Pods are
+    removed too. What tells Kubernetes that those Pods belonged to the ReplicaSet?
+  options:
+    A: "The annotations kubectl added when it created the Pods"
+    B: "A finalizer that the ReplicaSet places on every Pod"
+    C: "The Pod names, which start with the ReplicaSet's name"
+    D: "The Pods' ownerReferences, which point to the ReplicaSet"
+  answer: D
+  explanation: >
+    Dependent objects carry ownerReferences that name their owner. The garbage collector
+    uses them to delete dependents when the owner is deleted (cascading deletion). Names
+    and annotations are not used for this, and finalizers only delay deletion until a
+    condition is met.
+  references:
+    - https://kubernetes.io/docs/concepts/architecture/garbage-collection/
+
+- id: kcna-kf-119
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: Why is etcd usually run with an odd number of members, such as 3 or 5?
+  options:
+    A: "Writes need a majority, and an even member adds no fault tolerance"
+    B: "etcd splits the keys across members, which only works with an odd count"
+    C: "Each member then stores an equal share of the data, such as one third"
+    D: "The API server only accepts etcd clusters that have an odd member count"
+  answer: A
+  explanation: >
+    etcd uses the Raft consensus algorithm, so a write needs a majority (quorum) of
+    members. Three members tolerate one failure, and four members still tolerate only
+    one, so the extra even member adds cost without extra fault tolerance. Every member
+    holds a full copy of the data; etcd does not shard keys.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
+    - https://etcd.io/docs/v3.5/faq/
+
+- id: kcna-kf-120
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: Which label selector matches Pods whose environment label is either prod or staging?
+  options:
+    A: "environment=prod,environment=staging"
+    B: "environment notin (dev, test)"
+    C: "environment in (prod, staging)"
+    D: "environment=prod|staging"
+  answer: C
+  explanation: >
+    The set-based operator in matches any of the listed values. In a selector, a comma
+    means AND, so environment=prod,environment=staging can never match. notin (dev, test)
+    would also match Pods without the label or with any other value, and | is not valid
+    selector syntax.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+
+- id: kcna-kf-121
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: >
+    Which command lists every resource type the API server serves, with its short name
+    and whether it is namespaced?
+  options:
+    A: kubectl api-versions
+    B: kubectl api-resources
+    C: kubectl get all -A
+    D: kubectl explain --recursive
+  answer: B
+  explanation: >
+    kubectl api-resources lists each resource type with its short names, API group, kind
+    and whether it is namespaced. kubectl api-versions lists only group/version strings,
+    kubectl get all lists objects (not types), and kubectl explain documents the fields of
+    one type.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_api-resources/
+
+- id: kcna-kf-122
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: easy
+  question: Why are application Pods normally created through a Deployment instead of as bare Pods?
+  options:
+    A: "A bare Pod is not replaced if it fails or its node is lost"
+    B: "Bare Pods cannot use volumes, probes or resource requests"
+    C: "The scheduler only places Pods that have an owner object"
+    D: "Bare Pods are given no IP address until a Service selects them"
+  answer: A
+  explanation: >
+    Pods are disposable and are not rescheduled by themselves. A Deployment (through its
+    ReplicaSet) keeps the desired number of replicas running and also handles rolling
+    updates. Bare Pods can use volumes and probes, are scheduled normally and get an IP
+    address like any other Pod.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/#working-with-pods
+    - https://kubernetes.io/docs/concepts/workloads/controllers/deployment/
+
+- id: kcna-kf-123
+  domain: k8s-fundamentals
+  topic: core-concepts
+  difficulty: medium
+  question: >
+    A Deployment named web already exists in the namespace shop. Which of these can you
+    also create in shop?
+  options:
+    A: "A second Deployment named web with different labels"
+    B: "A Service named web in the same namespace"
+    C: "A Deployment named Web with a capital W"
+    D: "A second Deployment named web with a new image"
+  answer: B
+  explanation: >
+    A name must be unique for its resource type within a namespace, so a Service and a
+    Deployment can both be called web. A second Deployment named web conflicts no matter
+    what its labels or image are, and Web is invalid because most resource names must be
+    lowercase DNS names.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/names/
+
+# --------------------------------------------------------------- administration (29)
 
 - id: kcna-kf-019
   domain: k8s-fundamentals
@@ -1150,7 +1329,129 @@
     - https://kubernetes.io/docs/reference/using-api/deprecation-guide/
     - https://kubernetes.io/docs/reference/using-api/deprecation-policy/
 
-# ------------------------------------------------------------------- scheduling (21)
+- id: kcna-kf-124
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which command prints the name of the context kubectl is currently using?
+  options:
+    A: kubectl config use-context
+    B: kubectl config set-context --current
+    C: kubectl config view --raw
+    D: kubectl config current-context
+  answer: D
+  explanation: >
+    kubectl config current-context prints the active context from your kubeconfig.
+    use-context switches to another context, set-context changes a context's settings, and
+    config view --raw dumps the whole kubeconfig, including credentials.
+  references:
+    - https://kubernetes.io/docs/tasks/access-application-cluster/configure-access-multiple-clusters/
+
+- id: kcna-kf-125
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: Which command lists only the Pods that carry the label app=web?
+  options:
+    A: kubectl get pods -l app=web
+    B: kubectl get pods --name app=web
+    C: kubectl get pods --field app=web
+    D: kubectl describe labels app=web
+  answer: A
+  explanation: >
+    The -l (--selector) flag filters objects by label. There is no --name or --field flag
+    for this (field selectors use --field-selector and match fields, not labels), and
+    labels is not a resource type you can describe.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_get/
+
+- id: kcna-kf-126
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    You want a starting YAML manifest for a Deployment that runs nginx, without creating
+    anything in the cluster. Which command produces it?
+  options:
+    A: "kubectl run web --image=nginx --restart=Always --output=yaml"
+    B: "kubectl create deployment web --image=nginx --save-config -o yaml"
+    C: "kubectl create deploy web --image=nginx --dry-run=client -o yaml"
+    D: "kubectl get deployment web --image=nginx --export -o yaml"
+  answer: C
+  explanation: >
+    --dry-run=client builds the object locally without sending it to the API server, and
+    -o yaml prints it, so you can redirect the output to a file and edit it. kubectl run
+    and create without a dry run create real objects, and kubectl get has no --image flag;
+    it only reads existing objects.
+  references:
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_create/kubectl_create_deployment/
+    - https://kubernetes.io/docs/reference/kubectl/conventions/
+
+- id: kcna-kf-127
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: easy
+  question: >
+    After patching the drained node worker-1, you want the scheduler to place new Pods on
+    it again. Which command does this?
+  options:
+    A: kubectl drain worker-1 --undo
+    B: kubectl taint node worker-1 ready
+    C: kubectl label node worker-1 schedulable=true
+    D: kubectl uncordon worker-1
+  answer: D
+  explanation: >
+    kubectl drain cordons the node (marks it unschedulable) and evicts its Pods. kubectl
+    uncordon marks it schedulable again. drain has no --undo flag, and adding a taint or
+    a label does not remove the unschedulable mark.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/safely-drain-node/
+    - https://kubernetes.io/docs/reference/kubectl/generated/kubectl_uncordon/
+
+- id: kcna-kf-128
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    You work in the namespace dev all day and want kubectl to use it without adding -n dev
+    to every command. Which command sets this?
+  options:
+    A: "kubectl config use-namespace dev --current-context"
+    B: "kubectl config set-context --current --namespace=dev"
+    C: "kubectl create namespace dev --set-as-default=true"
+    D: "kubectl label namespace dev kubectl.kubernetes.io/default=true"
+  answer: B
+  explanation: >
+    The namespace is stored per context in your kubeconfig, and
+    kubectl config set-context --current --namespace=dev changes it for the current
+    context. There is no use-namespace subcommand or --set-as-default flag, and a label on
+    the Namespace object does not change kubectl's default.
+  references:
+    - https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#setting-the-namespace-preference
+
+- id: kcna-kf-129
+  domain: k8s-fundamentals
+  topic: administration
+  difficulty: medium
+  question: >
+    Which data must you back up so you can restore a cluster's objects, such as
+    Deployments, Services and Secrets, after the control plane is lost?
+  options:
+    A: "The etcd data, which holds the state of all API objects"
+    B: "The kubelet configuration files on every worker node"
+    C: "The container images cached by the runtime on each node"
+    D: "The kube-scheduler's cache of Pod-to-node assignments"
+  answer: A
+  explanation: >
+    etcd is the backing store for all cluster data, so a snapshot of it is what lets you
+    restore the API objects. kubelet configs and cached images live on the nodes and don't
+    hold the cluster state, and the scheduler keeps no durable state of its own.
+  references:
+    - https://kubernetes.io/docs/tasks/administer-cluster/configure-upgrade-etcd/
+    - https://kubernetes.io/docs/concepts/overview/components/
+
+# ------------------------------------------------------------------- scheduling (26)
 
 - id: kcna-kf-030
   domain: k8s-fundamentals
@@ -1568,7 +1869,107 @@
     - https://kubernetes.io/docs/concepts/architecture/nodes/#node-controller
     - https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
 
-# -------------------------------------------------------------- containerization (24)
+- id: kcna-kf-130
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: A Pod manifest sets spec.nodeName to worker-3. What happens when you create it?
+  options:
+    A: "kube-scheduler scores worker-3 higher but may still choose another node"
+    B: "The Pod stays Pending until a node label nodeName=worker-3 is added"
+    C: "kube-scheduler skips it, and the kubelet on worker-3 runs it directly"
+    D: "The API server rejects it, because only the scheduler may set nodeName"
+  answer: C
+  explanation: >
+    If nodeName is already set, the scheduler ignores the Pod and the kubelet on that node
+    tries to run it. It is the most direct form of node selection, and it bypasses
+    scheduling checks. nodeName is a Pod field, not a label, and it is not a scoring hint.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodename
+
+- id: kcna-kf-131
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: hard
+  question: >
+    The nodes gpu-1 and gpu-2 have the taint gpu=true:NoSchedule. A Pod has a matching
+    toleration and no other placement rules. Where can it be scheduled?
+  options:
+    A: "Only on gpu-1 or gpu-2, because the toleration pulls it there"
+    B: "On any node that has room, including the tainted gpu nodes"
+    C: "Only on nodes without taints, since tolerations are ignored"
+    D: "Nowhere until the taint effect is changed to PreferNoSchedule"
+  answer: B
+  explanation: >
+    A toleration only allows a Pod onto a tainted node; it does not attract the Pod there.
+    The Pod can land on the gpu nodes or on any untainted node. To keep it on the gpu nodes
+    you also need a nodeSelector or node affinity.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/
+
+- id: kcna-kf-132
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    How does requiredDuringSchedulingIgnoredDuringExecution node affinity differ from
+    preferredDuringSchedulingIgnoredDuringExecution?
+  options:
+    A: "Required also evicts running Pods; preferred affects new Pods"
+    B: "Required applies to Pods; preferred applies to namespaces"
+    C: "Required matches node labels; preferred matches node taints"
+    D: "Required must be met to schedule; preferred is only favored"
+  answer: D
+  explanation: >
+    The required form is a hard rule - the Pod is not scheduled unless a node matches. The
+    preferred form is soft - the scheduler favors matching nodes but still places the Pod
+    elsewhere. Both match node labels, and IgnoredDuringExecution means neither evicts
+    running Pods when labels change.
+  references:
+    - https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+
+- id: kcna-kf-133
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: easy
+  question: >
+    None of a Pod's containers set CPU or memory requests or limits. Which quality of
+    service (QoS) class does the Pod get?
+  options:
+    A: Guaranteed
+    B: Burstable
+    C: BestEffort
+    D: Unbounded
+  answer: C
+  explanation: >
+    A Pod with no requests or limits on any container is BestEffort, and it is the first
+    to be evicted under node pressure. Guaranteed needs requests equal to limits for CPU
+    and memory on every container, and Burstable is everything in between. Unbounded is
+    not a QoS class.
+  references:
+    - https://kubernetes.io/docs/concepts/workloads/pods/pod-qos/
+
+- id: kcna-kf-134
+  domain: k8s-fundamentals
+  topic: scheduling
+  difficulty: medium
+  question: >
+    A team runs a second, custom scheduler alongside kube-scheduler. How does a Pod ask to
+    be placed by the custom one?
+  options:
+    A: "By setting spec.schedulerName to the custom scheduler's name"
+    B: "By adding a toleration for the custom scheduler's node taint"
+    C: "By creating a PriorityClass that points to the custom scheduler"
+    D: "By labeling its namespace with the custom scheduler's name"
+  answer: A
+  explanation: >
+    Kubernetes can run several schedulers at once. Each Pod names the one it wants in
+    spec.schedulerName; if it is not set, default-scheduler is used. Tolerations,
+    PriorityClasses and namespace labels do not select a scheduler.
+  references:
+    - https://kubernetes.io/docs/tasks/extend-kubernetes/configure-multiple-schedulers/
+
+# -------------------------------------------------------------- containerization (30)
 
 - id: kcna-kf-041
   domain: k8s-fundamentals
@@ -2035,3 +2436,125 @@
   references:
     - https://docs.docker.com/build/building/best-practices/#decouple-applications
     - https://kubernetes.io/docs/concepts/workloads/pods/
+
+- id: kcna-kf-135
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    A container image defines an ENTRYPOINT and a CMD. In the Pod spec you set only args.
+    What runs when the container starts?
+  options:
+    A: "The image's ENTRYPOINT, with your args replacing the image's CMD"
+    B: "Your args alone, run as the command, ignoring ENTRYPOINT and CMD"
+    C: "The image's CMD, with your args appended after its own arguments"
+    D: "The image's ENTRYPOINT and CMD, with args set as env variables"
+  answer: A
+  explanation: >
+    In Kubernetes, command overrides the image's ENTRYPOINT and args overrides its CMD.
+    If you set args but not command, the image's default command runs with your new
+    arguments. args are never appended to CMD or turned into environment variables.
+  references:
+    - https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/
+
+- id: kcna-kf-136
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: >
+    Two images are built FROM the same base image. When one node pulls both images, what
+    happens to the base image's layers?
+  options:
+    A: "They are downloaded twice, once for each image"
+    B: "They are merged into one flattened layer per image"
+    C: "They are downloaded once and shared by both images"
+    D: "They are turned into a volume mounted by both Pods"
+  answer: C
+  explanation: >
+    An image is a stack of read-only, content-addressed layers. Layers with the same
+    digest are stored once and reused by every image that contains them, which saves
+    download time and disk space. Layers are not flattened or turned into volumes.
+  references:
+    - https://docs.docker.com/get-started/docker-concepts/building-images/understanding-image-layers/
+    - https://github.com/opencontainers/image-spec/blob/main/spec.md
+
+- id: kcna-kf-137
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    A Pod uses the image redis:7.2, with no registry host in the name. With default
+    settings, where is the image pulled from?
+  options:
+    A: "The registry of the cloud provider that runs the cluster"
+    B: "Docker Hub (docker.io), the default public registry"
+    C: "A local registry that every Kubernetes node runs"
+    D: "The registry configured in the kube-apiserver flags"
+  answer: B
+  explanation: >
+    If no registry hostname is given, Kubernetes assumes the Docker public registry, so
+    redis:7.2 means docker.io/library/redis:7.2. The default can be changed in the
+    container runtime's configuration, not in the API server. Nodes don't run a registry
+    by default.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/images/#image-names
+
+- id: kcna-kf-138
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: medium
+  question: >
+    A container uses the image nginx:1.27.2 and does not set imagePullPolicy. Which
+    policy does Kubernetes set?
+  options:
+    A: Always
+    B: Never
+    C: OnFailure
+    D: IfNotPresent
+  answer: D
+  explanation: >
+    When imagePullPolicy is omitted and the tag is a specific one other than latest, it
+    defaults to IfNotPresent, so the image is pulled only if it is not already on the
+    node. A missing tag or :latest defaults to Always. OnFailure is a restartPolicy value,
+    not a pull policy.
+  references:
+    - https://kubernetes.io/docs/concepts/containers/images/#imagepullpolicy-defaulting
+
+- id: kcna-kf-139
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: easy
+  question: Why do teams often build production images on a minimal or distroless base image?
+  options:
+    A: "Minimal images let containers run without a container runtime"
+    B: "Fewer packages mean a smaller image and fewer vulnerabilities"
+    C: "Distroless images are required by the CRI to run on Kubernetes"
+    D: "Smaller base images give a Pod a higher QoS class by default"
+  answer: B
+  explanation: >
+    A minimal base image contains only what the application needs. That makes it smaller
+    and faster to pull, and it gives attackers and scanners less to find. It still needs a
+    container runtime, the CRI doesn't require it, and image size has no effect on QoS.
+  references:
+    - https://docs.docker.com/build/building/best-practices/#choose-the-right-base-image
+
+- id: kcna-kf-140
+  domain: k8s-fundamentals
+  topic: containerization
+  difficulty: hard
+  question: >
+    A container listens on port 8080, but its spec does not list 8080 under ports. Can
+    other Pods still reach it on 8080?
+  options:
+    A: "No, unlisted ports are blocked by the kubelet's firewall rules"
+    B: "No, the network plugin only routes ports listed in the spec"
+    C: "Only if a NetworkPolicy explicitly allows the unlisted port"
+    D: "Yes, the ports list is informational and blocks nothing"
+  answer: D
+  explanation: >
+    The API reference says that not listing a port does not prevent it from being exposed.
+    Any port listening on 0.0.0.0 in the container can be reached over the Pod network.
+    The ports list documents the ports and lets you name them. Without any NetworkPolicy,
+    all traffic is allowed.
+  references:
+    - https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#ports
